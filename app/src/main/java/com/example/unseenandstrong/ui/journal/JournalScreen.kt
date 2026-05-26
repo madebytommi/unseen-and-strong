@@ -31,6 +31,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -76,12 +77,29 @@ fun JournalScreen(
                     .fillMaxSize()
                     .padding(24.dp)
                     .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(24.dp),
+                verticalArrangement = Arrangement.spacedBy(if (isFlareDay) 18.dp else 24.dp),
                 horizontalAlignment = Alignment.Start
             ) {
+                if (isFlareDay) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = LavenderPurple.copy(alpha = 0.28f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Flare Day Mode is active. One sentence is enough. A win can simply be surviving today.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = contrastTextColor,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = LavenderPurple.copy(alpha = 0.1f)
+                        containerColor = LavenderPurple.copy(alpha = if (isFlareDay) 0.18f else 0.1f)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -95,7 +113,11 @@ fun JournalScreen(
                             color = contrastTextColor
                         )
                         Text(
-                            text = "Did you do something hard today that no one saw?",
+                            text = if (isFlareDay) {
+                                "What tiny thing helped you make it through?"
+                            } else {
+                                "Did you do something hard today that no one saw?"
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = contrastTextColor
                         )
@@ -104,7 +126,7 @@ fun JournalScreen(
                             onValueChange = { winContent = it },
                             placeholder = {
                                 Text(
-                                    text = "Share your small victory...",
+                                    text = if (isFlareDay) "I made it through..." else "Share your small victory...",
                                     color = contrastTextColor
                                 )
                             },
@@ -115,7 +137,8 @@ fun JournalScreen(
                                 focusedTextColor = contrastTextColor,
                                 unfocusedTextColor = contrastTextColor
                             ),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = if (isFlareDay) 3 else Int.MAX_VALUE
                         )
                         Button(
                             onClick = {
@@ -138,58 +161,60 @@ fun JournalScreen(
                     }
                 }
 
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = SoftBlushPink.copy(alpha = 0.1f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                if (!isFlareDay) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = SoftBlushPink.copy(alpha = 0.1f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "Surviving the Day",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = contrastTextColor
-                        )
-                        OutlinedTextField(
-                            value = entryContent,
-                            onValueChange = { entryContent = it },
-                            placeholder = {
-                                Text(
-                                    text = "You don't have to be productive today. Just be here.",
-                                    color = contrastTextColor
-                                )
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = SoftBlushPink,
-                                unfocusedBorderColor = SoftBlushPink.copy(alpha = 0.5f),
-                                cursorColor = contrastTextColor,
-                                focusedTextColor = contrastTextColor,
-                                unfocusedTextColor = contrastTextColor
-                            ),
-                            modifier = Modifier.fillMaxWidth(),
-                            maxLines = 10,
-                            minLines = 5
-                        )
-                        Button(
-                            onClick = {
-                                if (entryContent.isNotBlank()) {
-                                    onSaveEntry(entryContent.trim())
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("Your thought is tucked away safely.")
-                                    }
-                                    entryContent = ""
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = SoftBlushPink,
-                                contentColor = contrastTextColor
-                            ),
-                            modifier = Modifier.align(Alignment.End)
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(text = "Save Entry")
+                            Text(
+                                text = "Surviving the Day",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = contrastTextColor
+                            )
+                            OutlinedTextField(
+                                value = entryContent,
+                                onValueChange = { entryContent = it },
+                                placeholder = {
+                                    Text(
+                                        text = "You don't have to be productive today. Just be here.",
+                                        color = contrastTextColor
+                                    )
+                                },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = SoftBlushPink,
+                                    unfocusedBorderColor = SoftBlushPink.copy(alpha = 0.5f),
+                                    cursorColor = contrastTextColor,
+                                    focusedTextColor = contrastTextColor,
+                                    unfocusedTextColor = contrastTextColor
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                                maxLines = 10,
+                                minLines = 5
+                            )
+                            Button(
+                                onClick = {
+                                    if (entryContent.isNotBlank()) {
+                                        onSaveEntry(entryContent.trim())
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar("Your thought is tucked away safely.")
+                                        }
+                                        entryContent = ""
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = SoftBlushPink,
+                                    contentColor = contrastTextColor
+                                ),
+                                modifier = Modifier.align(Alignment.End)
+                            ) {
+                                Text(text = "Save Entry")
+                            }
                         }
                     }
                 }
@@ -211,40 +236,42 @@ fun JournalScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        entries.forEach { entry ->
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateContentSize(),
-                                colors = CardDefaults.cardColors(containerColor = historyCardColor)
-                            ) {
-                                var expanded by remember { mutableStateOf(false) }
-                                Column(
+                        entries
+                            .take(if (isFlareDay) 3 else entries.size)
+                            .forEach { entry ->
+                                Card(
                                     modifier = Modifier
-                                        .clickable { expanded = !expanded }
-                                        .padding(14.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        .fillMaxWidth()
+                                        .animateContentSize(),
+                                    colors = CardDefaults.cardColors(containerColor = historyCardColor)
                                 ) {
-                                    Text(
-                                        text = if (entry.isUnseenWin) "Unseen Win" else "Journal Entry",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = if (entry.isUnseenWin) LavenderPurple else SoftBlushPink
-                                    )
-                                    Text(
-                                        text = entry.content,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = contrastTextColor,
-                                        maxLines = if (expanded) Int.MAX_VALUE else 2,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = formatTimestamp(entry.timestamp),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = contrastTextColor.copy(alpha = 0.8f)
-                                    )
+                                    var expanded by remember { mutableStateOf(false) }
+                                    Column(
+                                        modifier = Modifier
+                                            .clickable { expanded = !expanded }
+                                            .padding(14.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = if (entry.isUnseenWin) "Unseen Win" else "Journal Entry",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = if (entry.isUnseenWin) LavenderPurple else SoftBlushPink
+                                        )
+                                        Text(
+                                            text = entry.content,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = contrastTextColor,
+                                            maxLines = if (expanded) Int.MAX_VALUE else 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = formatTimestamp(entry.timestamp),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = contrastTextColor.copy(alpha = 0.8f)
+                                        )
+                                    }
                                 }
                             }
-                        }
                     }
                 }
             }
@@ -256,7 +283,7 @@ fun JournalScreen(
                     Snackbar(
                         snackbarData = data,
                         containerColor = SoftCloudGrey,
-                        contentColor = contrastTextColor
+                        contentColor = DeepFogGrey
                     )
                 }
             )
