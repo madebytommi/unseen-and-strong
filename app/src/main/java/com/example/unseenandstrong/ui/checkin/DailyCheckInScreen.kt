@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -27,10 +29,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
 import com.example.unseenandstrong.ui.theme.NightLavender
+import com.example.unseenandstrong.ui.theme.PaleCloudWhite
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
 import com.example.unseenandstrong.ui.theme.LavenderPurple
@@ -47,6 +51,7 @@ fun DailyCheckInScreen(
     var mood by remember { mutableStateOf("") }
 
     val backgroundColor = if (isFlareDay) NightLavender else SoftCloudGrey
+    val contrastTextColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -59,20 +64,38 @@ fun DailyCheckInScreen(
                 modifier = Modifier
                     .padding(24.dp)
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState()) // Enable vertical scrolling
+                    .verticalScroll(rememberScrollState())
             ) {
                     Text(
-                        text = "Daily Check-in",
+                        text = if (isFlareDay) "Gentle Check-in" else "Daily Check-in",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = DeepFogGrey,
-                        modifier = Modifier.padding(bottom = 24.dp)
+                        color = contrastTextColor,
+                        modifier = Modifier.padding(bottom = 16.dp)
                     )
 
-                    // Pain Level Slider
+                    if (isFlareDay) {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = LavenderPurple.copy(alpha = 0.28f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 20.dp)
+                        ) {
+                            Text(
+                                text = "Only the basics today. Notice pain, notice energy, save it, and let that be enough.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = contrastTextColor,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+
                     Text(
                         text = "Pain Level",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = DeepFogGrey,
+                        color = contrastTextColor,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Slider(
@@ -83,22 +106,21 @@ fun DailyCheckInScreen(
                         colors = SliderDefaults.colors(
                             thumbColor = SoftBlushPink,
                             activeTrackColor = LavenderPurple,
-                            inactiveTrackColor = DeepFogGrey.copy(alpha = 0.3f)
+                            inactiveTrackColor = contrastTextColor.copy(alpha = 0.3f)
                         ),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Text(
                         text = "${painLevel.toInt()}/10",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = DeepFogGrey,
+                        color = contrastTextColor,
                         modifier = Modifier.padding(bottom = 24.dp)
                     )
 
-                    // Energy (Spoons) Slider
                     Text(
                         text = "Energy (Spoons)",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = DeepFogGrey,
+                        color = contrastTextColor,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Slider(
@@ -109,47 +131,56 @@ fun DailyCheckInScreen(
                         colors = SliderDefaults.colors(
                             thumbColor = LavenderPurple,
                             activeTrackColor = SoftBlushPink,
-                            inactiveTrackColor = DeepFogGrey.copy(alpha = 0.3f)
+                            inactiveTrackColor = contrastTextColor.copy(alpha = 0.3f)
                         ),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Text(
                         text = "${spoonsLevel.toInt()}/10",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = DeepFogGrey,
+                        color = contrastTextColor,
                         modifier = Modifier.padding(bottom = 24.dp)
                     )
 
-                    // Mood Section
-                    Text(
-                        text = "Mood",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = DeepFogGrey,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    OutlinedTextField(
-                        value = mood,
-                        onValueChange = { mood = it },
-                        label = { Text("How are you feeling?", color = DeepFogGrey) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = LavenderPurple,
-                            unfocusedBorderColor = SoftBlushPink,
-                            cursorColor = DeepFogGrey,
-                            focusedTextColor = DeepFogGrey,
-                            unfocusedTextColor = DeepFogGrey
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 32.dp)
-                    )
+                    if (!isFlareDay) {
+                        Text(
+                            text = "Mood",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = contrastTextColor,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = mood,
+                            onValueChange = { mood = it },
+                            label = { Text("How are you feeling?", color = contrastTextColor) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = LavenderPurple,
+                                unfocusedBorderColor = SoftBlushPink,
+                                cursorColor = contrastTextColor,
+                                focusedTextColor = contrastTextColor,
+                                unfocusedTextColor = contrastTextColor
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 32.dp)
+                        )
+                    }
 
-                    // Save Button
                     Button(
                         onClick = {
-                            onSave(painLevel.toInt(), spoonsLevel.toInt(), mood)
+                            val savedMood = if (isFlareDay && mood.isBlank()) {
+                                "Flare day check-in"
+                            } else {
+                                mood
+                            }
+                            onSave(painLevel.toInt(), spoonsLevel.toInt(), savedMood)
                             scope.launch {
                                 snackbarHostState.showSnackbar(
-                                    message = "Day saved. Thank you for checking in.",
+                                    message = if (isFlareDay) {
+                                        "Saved. Rest counts."
+                                    } else {
+                                        "Day saved. Thank you for checking in."
+                                    },
                                     duration = SnackbarDuration.Short
                                 )
                             }
@@ -161,7 +192,7 @@ fun DailyCheckInScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Save my day",
+                            text = if (isFlareDay) "Save gentle check-in" else "Save my day",
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
