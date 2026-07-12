@@ -239,17 +239,16 @@ fun JournalScreen(
                         entries
                             .take(if (isFlareDay) 3 else entries.size)
                             .forEach { entry ->
+                                var expanded by remember(entry.id) { mutableStateOf(false) }
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .animateContentSize(),
+                                        .animateContentSize()
+                                        .clickable { expanded = !expanded },
                                     colors = CardDefaults.cardColors(containerColor = historyCardColor)
                                 ) {
-                                    var expanded by remember { mutableStateOf(false) }
                                     Column(
-                                        modifier = Modifier
-                                            .clickable { expanded = !expanded }
-                                            .padding(14.dp),
+                                        modifier = Modifier.padding(14.dp),
                                         verticalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
                                         Text(

@@ -14,6 +14,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.AlertDialog
@@ -31,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +49,7 @@ import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
+import kotlinx.coroutines.launch
 
 @Composable
 fun RoutineScreen(
@@ -56,9 +62,21 @@ fun RoutineScreen(
     val contrastTextColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
 
     var showAddDialog by remember { mutableStateOf(false) }
+    var newTaskName by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         containerColor = backgroundColor,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = SoftCloudGrey,
+                    contentColor = DeepFogGrey
+                )
+            }
+        },
         floatingActionButton = {
             if (!isFlareDay) {
                 FloatingActionButton(
@@ -166,9 +184,11 @@ fun RoutineScreen(
         }
 
         if (showAddDialog) {
-            var newTaskName by remember { mutableStateOf("") }
             AlertDialog(
-                onDismissRequest = { showAddDialog = false },
+                onDismissRequest = {
+                    showAddDialog = false
+                    newTaskName = ""
+                },
                 containerColor = SoftCloudGrey,
                 title = {
                     Text(
@@ -187,7 +207,8 @@ fun RoutineScreen(
                             unfocusedBorderColor = LavenderPurple,
                             focusedTextColor = DeepFogGrey,
                             unfocusedTextColor = DeepFogGrey
-                        )
+                        ),
+                        modifier = Modifier.fillMaxWidth()
                     )
                 },
                 confirmButton = {
@@ -196,6 +217,13 @@ fun RoutineScreen(
                             if (newTaskName.isNotBlank()) {
                                 onAddTask(newTaskName.trim())
                                 showAddDialog = false
+                                newTaskName = ""
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Saved. Your tiny goal is ready.",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = LavenderPurple)
@@ -204,7 +232,10 @@ fun RoutineScreen(
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showAddDialog = false }) {
+                    TextButton(onClick = {
+                        showAddDialog = false
+                        newTaskName = ""
+                    }) {
                         Text("Cancel", color = SoftBlushPink)
                     }
                 }
