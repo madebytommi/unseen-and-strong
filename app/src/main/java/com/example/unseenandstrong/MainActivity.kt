@@ -19,14 +19,15 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Healing
+import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.Tab
 import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,6 +44,9 @@ import com.example.unseenandstrong.data.local.UnseenDatabase
 import com.example.unseenandstrong.ui.checkin.CheckInViewModel
 import com.example.unseenandstrong.ui.checkin.DailyCheckInScreen
 import com.example.unseenandstrong.ui.comfort.ComfortBoxScreen
+import com.example.unseenandstrong.ui.cycle.CycleTrackerScreen
+import com.example.unseenandstrong.ui.cycle.CycleViewModel
+import com.example.unseenandstrong.ui.insights.InsightsViewModel
 import com.example.unseenandstrong.ui.interaction.InteractionScreen
 import com.example.unseenandstrong.ui.interaction.InteractionViewModel
 import com.example.unseenandstrong.ui.journal.JournalScreen
@@ -139,6 +143,27 @@ class MainActivity : ComponentActivity() {
         )[MedicationViewModel::class.java]
     }
 
+    private val cycleViewModel: CycleViewModel by lazy {
+        ViewModelProvider(
+            this,
+            CycleViewModel.Factory(
+                cycleLogDao = database.cycleLogDao(),
+                cycleSettingsDao = database.cycleSettingsDao()
+            )
+        )[CycleViewModel::class.java]
+    }
+
+    private val insightsViewModel: InsightsViewModel by lazy {
+        ViewModelProvider(
+            this,
+            InsightsViewModel.Factory(
+                dailyCheckInDao = database.dailyCheckInDao(),
+                medLogDao = database.medLogDao(),
+                cycleLogDao = database.cycleLogDao()
+            )
+        )[InsightsViewModel::class.java]
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -197,6 +222,10 @@ class MainActivity : ComponentActivity() {
                                         )
                                         HomeScreen.Meds -> MedicationTrackerScreen(
                                             viewModel = medicationViewModel,
+                                            isFlareDay = isFlareDayActive
+                                        )
+                                        HomeScreen.Cycle -> CycleTrackerScreen(
+                                            viewModel = cycleViewModel,
                                             isFlareDay = isFlareDayActive
                                         )
                                         HomeScreen.SpeakStrong -> SpeakStrongScreen(
@@ -260,6 +289,7 @@ private enum class HomeScreen {
     Journal,
     Routine,
     Meds,
+    Cycle,
     SpeakStrong,
     Accommodation,
     Resource,
@@ -274,6 +304,7 @@ private enum class HomeScreen {
             Journal -> "Journal"
             Routine -> "Routine"
             Meds -> "Meds"
+            Cycle -> "Cycle"
             SpeakStrong -> "Speak Strong"
             Accommodation -> "Accommodation"
             Resource -> "Resources"
@@ -289,6 +320,7 @@ private enum class HomeScreen {
             Journal -> Icons.Default.Edit
             Routine -> Icons.AutoMirrored.Filled.List
             Meds -> Icons.Default.Healing
+            Cycle -> Icons.Default.Spa
             SpeakStrong -> Icons.Default.Edit
             Accommodation -> Icons.Default.Description
             Resource -> Icons.Default.Description
@@ -310,6 +342,7 @@ private fun BottomNavigationBar(
         HomeScreen.Journal,
         HomeScreen.Routine,
         HomeScreen.Meds,
+        HomeScreen.Cycle,
         HomeScreen.SpeakStrong,
         HomeScreen.Log,
         HomeScreen.Vault
@@ -321,22 +354,29 @@ private fun BottomNavigationBar(
     ) {
         HomeScreen.SpeakStrong
     } else currentScreen
+    val selectedIndex = topLevelScreens.indexOf(selectedScreen).coerceAtLeast(0)
 
-    NavigationBar(
+    ScrollableTabRow(
+        selectedTabIndex = selectedIndex,
         containerColor = if (isFlareDay) NightLavender else SoftCloudGrey,
-        contentColor = DeepFogGrey
+        contentColor = DeepFogGrey,
+        divider = {},
+        indicator = {},
+        edgePadding = 0.dp
     ) {
         topLevelScreens.forEach { screen ->
-            NavigationBarItem(
+            Tab(
                 selected = selectedScreen == screen,
                 onClick = { onScreenSelected(screen) },
+                text = { Text(text = screen.label) },
                 icon = {
                     Icon(
                         imageVector = screen.icon,
                         contentDescription = screen.label
                     )
                 },
-                label = { Text(text = screen.label) }
+                selectedContentColor = if (isFlareDay) SoftBlushPink else LavenderPurple,
+                unselectedContentColor = DeepFogGrey
             )
         }
     }

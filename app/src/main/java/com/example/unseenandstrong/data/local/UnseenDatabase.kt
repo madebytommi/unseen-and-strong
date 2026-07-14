@@ -30,6 +30,10 @@ import com.example.unseenandstrong.data.local.medication.PRNLogDao
 import com.example.unseenandstrong.data.local.medication.PRNLogEntity
 import com.example.unseenandstrong.data.local.medication.ReactionDao
 import com.example.unseenandstrong.data.local.medication.ReactionEntity
+import com.example.unseenandstrong.data.local.cycle.CycleLogDao
+import com.example.unseenandstrong.data.local.cycle.CycleLogEntity
+import com.example.unseenandstrong.data.local.cycle.CycleSettingsDao
+import com.example.unseenandstrong.data.local.cycle.CycleSettingsEntity
 
 @Database(
     entities = [
@@ -44,9 +48,11 @@ import com.example.unseenandstrong.data.local.medication.ReactionEntity
         MedicationEntity::class,
         MedLogEntity::class,
         PRNLogEntity::class,
-        ReactionEntity::class
+        ReactionEntity::class,
+        CycleLogEntity::class,
+        CycleSettingsEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class UnseenDatabase : RoomDatabase() {
@@ -63,6 +69,8 @@ abstract class UnseenDatabase : RoomDatabase() {
     abstract fun medLogDao(): MedLogDao
     abstract fun prnLogDao(): PRNLogDao
     abstract fun reactionDao(): ReactionDao
+    abstract fun cycleLogDao(): CycleLogDao
+    abstract fun cycleSettingsDao(): CycleSettingsDao
 
     companion object {
         @Volatile
@@ -75,7 +83,7 @@ abstract class UnseenDatabase : RoomDatabase() {
                     UnseenDatabase::class.java,
                     "unseen_database"
                 )
-                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                     .addCallback(SEED_SCRIPTS_CALLBACK)
                     .fallbackToDestructiveMigration()
                     .build()
@@ -225,6 +233,32 @@ abstract class UnseenDatabase : RoomDatabase() {
                     """.trimIndent()
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_reactions_medId ON reactions(medId)")
+            }
+        }
+
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS cycle_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        date INTEGER NOT NULL,
+                        phase TEXT NOT NULL,
+                        flowIntensity TEXT NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS cycle_settings (
+                        id INTEGER PRIMARY KEY NOT NULL,
+                        trackingMode TEXT NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "INSERT OR IGNORE INTO cycle_settings (id, trackingMode) VALUES (1, 'Standard')"
+                )
             }
         }
 
