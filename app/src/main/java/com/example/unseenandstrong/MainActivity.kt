@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -46,6 +47,8 @@ import com.example.unseenandstrong.ui.interaction.InteractionScreen
 import com.example.unseenandstrong.ui.interaction.InteractionViewModel
 import com.example.unseenandstrong.ui.journal.JournalScreen
 import com.example.unseenandstrong.ui.journal.JournalViewModel
+import com.example.unseenandstrong.ui.medication.MedicationTrackerScreen
+import com.example.unseenandstrong.ui.medication.MedicationViewModel
 import com.example.unseenandstrong.ui.routine.RoutineScreen
 import com.example.unseenandstrong.ui.routine.RoutineViewModel
 import com.example.unseenandstrong.ui.speakstrong.SpeakStrongScreen
@@ -124,6 +127,18 @@ class MainActivity : ComponentActivity() {
         )[VaultViewModel::class.java]
     }
 
+    private val medicationViewModel: MedicationViewModel by lazy {
+        ViewModelProvider(
+            this,
+            MedicationViewModel.Factory(
+                medicationDao = database.medicationDao(),
+                medLogDao = database.medLogDao(),
+                prnLogDao = database.prnLogDao(),
+                reactionDao = database.reactionDao()
+            )
+        )[MedicationViewModel::class.java]
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -178,6 +193,10 @@ class MainActivity : ComponentActivity() {
                                             tasks = routineTasks,
                                             onToggleTask = routineViewModel::toggleTask,
                                             onAddTask = routineViewModel::addTask,
+                                            isFlareDay = isFlareDayActive
+                                        )
+                                        HomeScreen.Meds -> MedicationTrackerScreen(
+                                            viewModel = medicationViewModel,
                                             isFlareDay = isFlareDayActive
                                         )
                                         HomeScreen.SpeakStrong -> SpeakStrongScreen(
@@ -240,6 +259,7 @@ private enum class HomeScreen {
     ComfortBox,
     Journal,
     Routine,
+    Meds,
     SpeakStrong,
     Accommodation,
     Resource,
@@ -253,6 +273,7 @@ private enum class HomeScreen {
             ComfortBox -> "Comfort"
             Journal -> "Journal"
             Routine -> "Routine"
+            Meds -> "Meds"
             SpeakStrong -> "Speak Strong"
             Accommodation -> "Accommodation"
             Resource -> "Resources"
@@ -267,6 +288,7 @@ private enum class HomeScreen {
             ComfortBox -> Icons.Default.Favorite
             Journal -> Icons.Default.Edit
             Routine -> Icons.AutoMirrored.Filled.List
+            Meds -> Icons.Default.Healing
             SpeakStrong -> Icons.Default.Edit
             Accommodation -> Icons.Default.Description
             Resource -> Icons.Default.Description
@@ -287,6 +309,7 @@ private fun BottomNavigationBar(
         HomeScreen.ComfortBox,
         HomeScreen.Journal,
         HomeScreen.Routine,
+        HomeScreen.Meds,
         HomeScreen.SpeakStrong,
         HomeScreen.Log,
         HomeScreen.Vault
