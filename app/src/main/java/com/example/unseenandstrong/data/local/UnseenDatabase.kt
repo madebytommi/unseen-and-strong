@@ -22,6 +22,14 @@ import com.example.unseenandstrong.data.local.accommodation.AccommodationRequest
 import com.example.unseenandstrong.data.local.accommodation.AccommodationRequestDao
 import com.example.unseenandstrong.data.local.benefits.BenefitsStageEntity
 import com.example.unseenandstrong.data.local.benefits.BenefitsStageDao
+import com.example.unseenandstrong.data.local.medication.MedLogDao
+import com.example.unseenandstrong.data.local.medication.MedLogEntity
+import com.example.unseenandstrong.data.local.medication.MedicationDao
+import com.example.unseenandstrong.data.local.medication.MedicationEntity
+import com.example.unseenandstrong.data.local.medication.PRNLogDao
+import com.example.unseenandstrong.data.local.medication.PRNLogEntity
+import com.example.unseenandstrong.data.local.medication.ReactionDao
+import com.example.unseenandstrong.data.local.medication.ReactionEntity
 
 @Database(
     entities = [
@@ -32,9 +40,13 @@ import com.example.unseenandstrong.data.local.benefits.BenefitsStageDao
         InteractionEntity::class,
         VaultDocumentEntity::class,
         AccommodationRequestEntity::class,
-        BenefitsStageEntity::class
+        BenefitsStageEntity::class,
+        MedicationEntity::class,
+        MedLogEntity::class,
+        PRNLogEntity::class,
+        ReactionEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 abstract class UnseenDatabase : RoomDatabase() {
@@ -47,6 +59,10 @@ abstract class UnseenDatabase : RoomDatabase() {
     abstract fun vaultDocumentDao(): VaultDocumentDao
     abstract fun accommodationRequestDao(): AccommodationRequestDao
     abstract fun benefitsStageDao(): BenefitsStageDao
+    abstract fun medicationDao(): MedicationDao
+    abstract fun medLogDao(): MedLogDao
+    abstract fun prnLogDao(): PRNLogDao
+    abstract fun reactionDao(): ReactionDao
 
     companion object {
         @Volatile
@@ -59,7 +75,7 @@ abstract class UnseenDatabase : RoomDatabase() {
                     UnseenDatabase::class.java,
                     "unseen_database"
                 )
-                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                     .addCallback(SEED_SCRIPTS_CALLBACK)
                     .fallbackToDestructiveMigration()
                     .build()
@@ -149,6 +165,66 @@ abstract class UnseenDatabase : RoomDatabase() {
                 db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (2, 'Medical Evaluation', 'Pending', '')")
                 db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (3, 'Reconsideration (Appeal 1)', 'Pending', '')")
                 db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (4, 'Hearing (Appeal 2)', 'Pending', '')")
+            }
+        }
+
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS medications (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        dosage TEXT NOT NULL,
+                        frequency TEXT NOT NULL,
+                        instructions TEXT NOT NULL,
+                        isPRN INTEGER NOT NULL,
+                        isActive INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS med_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        medId INTEGER NOT NULL,
+                        scheduledTime INTEGER NOT NULL,
+                        actualTakenTime INTEGER,
+                        status TEXT NOT NULL,
+                        FOREIGN KEY(medId) REFERENCES medications(id) ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_med_logs_medId ON med_logs(medId)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS prn_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        medId INTEGER NOT NULL,
+                        timeTaken INTEGER NOT NULL,
+                        reason TEXT NOT NULL,
+                        reliefDurationHours INTEGER NOT NULL,
+                        effectivenessRating INTEGER NOT NULL,
+                        FOREIGN KEY(medId) REFERENCES medications(id) ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_prn_logs_medId ON prn_logs(medId)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS reactions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        medId INTEGER NOT NULL,
+                        date INTEGER NOT NULL,
+                        description TEXT NOT NULL,
+                        severity INTEGER NOT NULL,
+                        FOREIGN KEY(medId) REFERENCES medications(id) ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_reactions_medId ON reactions(medId)")
             }
         }
 
