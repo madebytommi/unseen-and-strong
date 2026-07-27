@@ -1,54 +1,89 @@
 package com.example.unseenandstrong.ui.benefits
 
-import android.app.Application
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.benefits.BenefitsStageEntity
-import com.example.unseenandstrong.ui.theme.*
+import com.example.unseenandstrong.ui.theme.ButterflyGlow
+import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.LavenderPurple
+import com.example.unseenandstrong.ui.theme.NightLavender
+import com.example.unseenandstrong.ui.theme.SoftBlushPink
+import com.example.unseenandstrong.ui.theme.SoftBorderGray
+import com.example.unseenandstrong.ui.theme.SoftCloudGrey
 import java.text.SimpleDateFormat
-import java.util.*
-import java.util.concurrent.TimeUnit
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun BenefitsTrackerScreen(
     isFlareDay: Boolean = false,
-    viewModel: BenefitsTrackerViewModel
+    viewModel: BenefitsTrackerViewModel,
+    onBackToHub: () -> Unit = {}
 ) {
     val stages by viewModel.stages.collectAsState()
     val backgroundColor = if (isFlareDay) NightLavender else SoftCloudGrey
     val headerTextColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
 
-    // Check for reminder
     val approachingDeadlineStage = remember(stages) {
-        val now = System.currentTimeMillis()
-        val sevenDaysMs = TimeUnit.DAYS.toMillis(7)
         stages.firstOrNull { stage ->
             val deadline = stage.deadlineDate
-            if (deadline != null && stage.status != "Completed") {
-                val diff = deadline - now
-                diff in 0..sevenDaysMs
-            } else {
-                false
-            }
+            deadline != null &&
+                stage.status != "Completed" &&
+                DeadlineDateUtils.daysUntil(deadline) in 0..7
         }
     }
 
@@ -61,6 +96,18 @@ fun BenefitsTrackerScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
+            Button(
+                onClick = onBackToHub,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SoftBlushPink,
+                    contentColor = DeepFogGrey
+                )
+            ) {
+                Text("Back to Speak Strong")
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 text = "SSDI Benefits Tracker",
                 style = MaterialTheme.typography.headlineMedium,
@@ -77,14 +124,18 @@ fun BenefitsTrackerScreen(
 
             approachingDeadlineStage?.let {
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = ButterflyGlow.copy(alpha = 0.2f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = ButterflyGlow.copy(alpha = 0.2f)
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = "Gentle reminder: You have paperwork due soon for '${it.stageName}'. Take it one step at a time.",
                         modifier = Modifier.padding(16.dp),
-                        color = DeepFogGrey,
+                        color = headerTextColor,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -92,18 +143,32 @@ fun BenefitsTrackerScreen(
 
             var selectedStage by remember { mutableStateOf<BenefitsStageEntity?>(null) }
 
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = 8.dp)
-            ) {
-                itemsIndexed(stages) { index, stage ->
-                    val isLast = index == stages.size - 1
-                    JourneyStageItem(
-                        stage = stage,
-                        isLast = isLast,
-                        isFlareDay = isFlareDay,
-                        onClick = { selectedStage = stage }
+            if (stages.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Your benefits stages will appear here when they are available.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = headerTextColor
                     )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    itemsIndexed(stages, key = { _, stage -> stage.id }) { index, stage ->
+                        JourneyStageItem(
+                            stage = stage,
+                            isLast = index == stages.lastIndex,
+                            isFlareDay = isFlareDay,
+                            onClick = { selectedStage = stage }
+                        )
+                    }
                 }
             }
 
@@ -138,8 +203,11 @@ fun JourneyStageItem(
         else -> SoftBorderGray
     }
 
-    Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-        // Timeline Column
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.width(40.dp)
@@ -153,11 +221,20 @@ fun JourneyStageItem(
                 contentAlignment = Alignment.Center
             ) {
                 if (stage.status == "Completed") {
-                    Icon(Icons.Default.Check, contentDescription = "Completed", tint = Color.White, modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = "Completed",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
             if (!isLast) {
-                Canvas(modifier = Modifier.weight(1f).width(2.dp)) {
+                Canvas(
+                    modifier = Modifier
+                        .weight(1f)
+                        .width(2.dp)
+                ) {
                     drawLine(
                         color = statusColor,
                         start = Offset(size.width / 2, 0f),
@@ -168,12 +245,13 @@ fun JourneyStageItem(
             }
         }
 
-        // Content
         Card(
             modifier = Modifier
                 .weight(1f)
                 .padding(bottom = 16.dp, start = 8.dp)
-                .clickable { onClick() },
+                .clickable(
+                    onClickLabel = "Edit ${stage.stageName}"
+                ) { onClick() },
             colors = CardDefaults.cardColors(containerColor = cardColor),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -193,9 +271,8 @@ fun JourneyStageItem(
                 )
 
                 stage.deadlineDate?.let {
-                    val dateString = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(it))
                     Text(
-                        text = "Deadline: $dateString",
+                        text = "Deadline: ${formatDeadlineDate(it)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = ButterflyGlow,
                         fontWeight = FontWeight.SemiBold
@@ -226,12 +303,12 @@ fun EditStageDialog(
     val dialogBg = if (isFlareDay) DeepFogGrey else Color.White
     val textColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
 
-    var status by remember { mutableStateOf(stage.status) }
-    var notes by remember { mutableStateOf(stage.notes) }
-    var deadlineDate by remember { mutableStateOf(stage.deadlineDate) } // Simplified: using Long
-
-    // In a real app we'd use DatePicker, here we mock it by adding 10 days for demo purposes
-    // Or we provide a simple generic date input. For brevity we just let them switch status and set notes.
+    var status by rememberSaveable(stage.id) { mutableStateOf(stage.status) }
+    var notes by rememberSaveable(stage.id) { mutableStateOf(stage.notes) }
+    var deadlineDate by remember(stage.id, stage.deadlineDate) {
+        mutableStateOf(stage.deadlineDate)
+    }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -243,11 +320,11 @@ fun EditStageDialog(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Update Status", color = textColor)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("Pending", "Active", "Completed").forEach { s ->
+                    listOf("Pending", "Active", "Completed").forEach { option ->
                         FilterChip(
-                            selected = status == s,
-                            onClick = { status = s },
-                            label = { Text(s) },
+                            selected = status == option,
+                            onClick = { status = option },
+                            label = { Text(option) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = LavenderPurple,
                                 selectedLabelColor = Color.White
@@ -256,19 +333,35 @@ fun EditStageDialog(
                     }
                 }
 
+                Text("Deadline", color = textColor)
                 Button(
-                    onClick = {
-                        // Mock setting deadline to 5 days from now to demo the reminder
-                        deadlineDate = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(5)
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = SoftCloudGrey)
+                    onClick = { showDatePicker = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SoftCloudGrey,
+                        contentColor = DeepFogGrey
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Set Deadline (Demo 5 days)", color = DeepFogGrey)
+                    Text(
+                        if (deadlineDate == null) {
+                            "Choose deadline"
+                        } else {
+                            "Change deadline"
+                        }
+                    )
                 }
 
-                deadlineDate?.let {
-                     val dateString = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(it))
-                     Text("Set for: $dateString", color = ButterflyGlow)
+                deadlineDate?.let { selectedDeadline ->
+                    Text(
+                        text = "Selected: ${formatDeadlineDate(selectedDeadline)}",
+                        color = if (isFlareDay) SoftBlushPink else ButterflyGlow
+                    )
+                    TextButton(
+                        onClick = { deadlineDate = null },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Clear deadline", color = SoftBlushPink)
+                    }
                 }
 
                 OutlinedTextField(
@@ -288,7 +381,13 @@ fun EditStageDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onSave(stage.copy(status = status, notes = notes, deadlineDate = deadlineDate))
+                    onSave(
+                        stage.copy(
+                            status = status,
+                            notes = notes,
+                            deadlineDate = deadlineDate
+                        )
+                    )
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = LavenderPurple)
             ) {
@@ -301,4 +400,58 @@ fun EditStageDialog(
             }
         }
     )
+
+    if (showDatePicker) {
+        DeadlineDatePickerDialog(
+            initialDeadlineMillis = deadlineDate,
+            onDismiss = { showDatePicker = false },
+            onDateSelected = { selectedDeadline ->
+                deadlineDate = selectedDeadline
+                showDatePicker = false
+            }
+        )
+    }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DeadlineDatePickerDialog(
+    initialDeadlineMillis: Long?,
+    onDismiss: () -> Unit,
+    onDateSelected: (Long) -> Unit
+) {
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = DeadlineDateUtils.toPickerUtcMillis(initialDeadlineMillis)
+    )
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    datePickerState.selectedDateMillis?.let { selectedUtcMillis ->
+                        onDateSelected(
+                            DeadlineDateUtils.fromPickerUtcMillis(selectedUtcMillis)
+                        )
+                    }
+                },
+                enabled = datePickerState.selectedDateMillis != null
+            ) {
+                Text("Use date")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    ) {
+        DatePicker(
+            state = datePickerState,
+            showModeToggle = false
+        )
+    }
+}
+
+private fun formatDeadlineDate(millis: Long): String =
+    SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(millis))

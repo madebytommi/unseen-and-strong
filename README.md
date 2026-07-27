@@ -6,11 +6,11 @@ Unseen and Strong is intentionally low-pressure: no streak shame, no punitive re
 
 ## Current status
 
-Phase 1 is now treated as the active MVP baseline. Phase 2 advocacy tools are also partially implemented, but Phase 3+ features are intentionally out of scope for the current MVP.
+Phase 1 is the completed revised MVP baseline. Phase 2 advocacy tools are substantially implemented but not complete. Early Phase 3 work has begun with medication and cycle tracking.
 
 ## Phase 1 — The Cocoon MVP
 
-Status: implemented as the core MVP, with the exception of voice journaling, which has been moved to Phase 3.
+Status: completed as the revised core MVP. Voice journaling was intentionally moved to Phase 3 because recording, playback, permissions, and additional testing are outside the offline-first baseline.
 
 Implemented Phase 1 features:
 
@@ -44,13 +44,13 @@ Implemented Phase 1 features:
 
 Moved out of Phase 1:
 
-- Voice journaling is now planned for Phase 3 because it adds audio permissions, recording/playback UX, and more testing complexity than the offline MVP needs right now.
+- Voice journaling is planned for Phase 3.
 
 ## Phase 2 — Speak Strong / Advocacy
 
 Status: partially implemented, not complete.
 
-Currently implemented:
+Currently implemented and accessible:
 
 - Speak Strong script hub
 - Gentle / Direct / Firm script tone switching
@@ -60,26 +60,37 @@ Currently implemented:
 - Advocacy Resources screen with eligibility-style checklists and validation content
 - Interaction Log with person, organization, category, notes, follow-up tracking, and timeline display
 - Document Vault for local image-based medical, insurance, and work documents
+- Request Log for FMLA, ADA, and disability requests
+- Disability Benefits Tracker with persisted stages, statuses, notes, completed dates, deadlines, and approaching-deadline support
 
 Still needed before Phase 2 can be called complete:
 
-- Dedicated benefits tracker screen
-- Fuller ADA/FMLA/STD/LTD request tracking workflow
-- Stronger before-and-after advocacy support flow
-- More meaningful script practice mode
+- Broader script coverage for Insurance, Family, and Strangers
+- Meaningful script rehearsal or recording
+- Structured before-and-after advocacy support
 - Local notification reminders for follow-ups
+- Fuller dedicated STD/LTD workflows
 
-## Later phases
+## Phase 3 — Medical Intelligence
 
-Phase 3 will focus on medical intelligence and deeper health tooling, including:
+Status: early implementation has begun, but Phase 3 is not complete.
+
+Implemented or underway:
+
+- Medication tracking
+- PRN medication logs
+- Medication reaction tracking
+- Chronic-friendly cycle tracking
+- Initial local pattern-insight data flows
+
+Still planned:
 
 - Voice journaling
-- Advanced medication tracking
 - Doctor-ready exports
-- Chronic-friendly cycle tracking
-- Safer pattern insights
+- Deeper and safer pattern insights
+- Additional medical-intelligence workflows defined for Phase 3
 
-Phase 4+ features like shop integration, physical care boxes, community support, cloud sync, and advanced AI insights are intentionally not part of the current MVP.
+Phase 4+ features such as shop integration, physical care boxes, community support, cloud sync, and advanced AI insights are intentionally outside the current MVP.
 
 ## Tech stack
 
