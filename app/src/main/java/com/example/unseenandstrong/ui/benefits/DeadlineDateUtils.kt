@@ -1,7 +1,6 @@
 package com.example.unseenandstrong.ui.benefits
 
 import java.time.Instant
-import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.Calendar
 import java.util.TimeZone
@@ -61,8 +60,8 @@ object DeadlineDateUtils {
         timeZone: TimeZone = TimeZone.getDefault()
     ): Long {
         val zoneId = timeZone.toZoneId()
-        val today = LocalDate.ofInstant(Instant.ofEpochMilli(nowMillis), zoneId)
-        val deadline = LocalDate.ofInstant(Instant.ofEpochMilli(deadlineMillis), zoneId)
+        val today = Instant.ofEpochMilli(nowMillis).atZone(zoneId).toLocalDate()
+        val deadline = Instant.ofEpochMilli(deadlineMillis).atZone(zoneId).toLocalDate()
         return ChronoUnit.DAYS.between(today, deadline)
     }
 }

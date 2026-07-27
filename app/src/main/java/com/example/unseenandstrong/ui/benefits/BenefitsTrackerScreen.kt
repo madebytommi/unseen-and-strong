@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -77,6 +76,7 @@ fun BenefitsTrackerScreen(
     val stages by viewModel.stages.collectAsState()
     val backgroundColor = if (isFlareDay) NightLavender else SoftCloudGrey
     val headerTextColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
+    var selectedStage by remember { mutableStateOf<BenefitsStageEntity?>(null) }
 
     val approachingDeadlineStage = remember(stages) {
         stages.firstOrNull { stage ->
@@ -87,9 +87,7 @@ fun BenefitsTrackerScreen(
         }
     }
 
-    Scaffold(
-        containerColor = backgroundColor
-    ) { paddingValues ->
+    Scaffold(containerColor = backgroundColor) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -107,7 +105,6 @@ fun BenefitsTrackerScreen(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-
             Text(
                 text = "SSDI Benefits Tracker",
                 style = MaterialTheme.typography.headlineMedium,
@@ -122,7 +119,7 @@ fun BenefitsTrackerScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            approachingDeadlineStage?.let {
+            approachingDeadlineStage?.let { stage ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -133,15 +130,13 @@ fun BenefitsTrackerScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Gentle reminder: You have paperwork due soon for '${it.stageName}'. Take it one step at a time.",
+                        text = "Gentle reminder: You have paperwork due soon for '${stage.stageName}'. Take it one step at a time.",
                         modifier = Modifier.padding(16.dp),
                         color = headerTextColor,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
-
-            var selectedStage by remember { mutableStateOf<BenefitsStageEntity?>(null) }
 
             if (stages.isEmpty()) {
                 Box(
@@ -196,7 +191,6 @@ fun JourneyStageItem(
 ) {
     val cardColor = if (isFlareDay) DeepFogGrey else Color.White
     val textColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
-
     val statusColor = when (stage.status) {
         "Completed" -> LavenderPurple
         "Active" -> ButterflyGlow
@@ -249,9 +243,7 @@ fun JourneyStageItem(
             modifier = Modifier
                 .weight(1f)
                 .padding(bottom = 16.dp, start = 8.dp)
-                .clickable(
-                    onClickLabel = "Edit ${stage.stageName}"
-                ) { onClick() },
+                .clickable(onClickLabel = "Edit ${stage.stageName}") { onClick() },
             colors = CardDefaults.cardColors(containerColor = cardColor),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -263,22 +255,19 @@ fun JourneyStageItem(
                     color = textColor
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
                     text = "Status: ${stage.status}",
                     style = MaterialTheme.typography.bodySmall,
                     color = textColor.copy(alpha = 0.8f)
                 )
-
-                stage.deadlineDate?.let {
+                stage.deadlineDate?.let { deadline ->
                     Text(
-                        text = "Deadline: ${formatDeadlineDate(it)}",
+                        text = "Deadline: ${formatDeadlineDate(deadline)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = ButterflyGlow,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
-
                 if (stage.notes.isNotBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -302,7 +291,6 @@ fun EditStageDialog(
 ) {
     val dialogBg = if (isFlareDay) DeepFogGrey else Color.White
     val textColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
-
     var status by rememberSaveable(stage.id) { mutableStateOf(stage.status) }
     var notes by rememberSaveable(stage.id) { mutableStateOf(stage.notes) }
     var deadlineDate by remember(stage.id, stage.deadlineDate) {
@@ -342,13 +330,7 @@ fun EditStageDialog(
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        if (deadlineDate == null) {
-                            "Choose deadline"
-                        } else {
-                            "Change deadline"
-                        }
-                    )
+                    Text(if (deadlineDate == null) "Choose deadline" else "Change deadline")
                 }
 
                 deadlineDate?.let { selectedDeadline ->
