@@ -45,13 +45,26 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build debug app
-        run: ./gradlew :app:assembleDebug --stacktrace
+        run: |
+          mkdir -p build-logs
+          ./gradlew :app:assembleDebug --stacktrace --console=plain 2>&1 | tee build-logs/assembleDebug.log
 
       - name: Run unit tests
-        run: ./gradlew :app:testDebugUnitTest --stacktrace
+        run: |
+          ./gradlew :app:testDebugUnitTest --stacktrace --console=plain 2>&1 | tee build-logs/testDebugUnitTest.log
 
       - name: Run Android lint
-        run: ./gradlew :app:lintDebug --stacktrace
+        run: |
+          ./gradlew :app:lintDebug --stacktrace --console=plain 2>&1 | tee build-logs/lintDebug.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-logs
+          path: build-logs/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload unit test reports
         if: always()
@@ -109,7 +122,19 @@ jobs:
           target: google_apis
           profile: pixel_2
           disable-animations: true
-          script: ./gradlew :app:connectedDebugAndroidTest --stacktrace
+          script: |
+            mkdir -p build-logs
+            set -o pipefail
+            ./gradlew :app:connectedDebugAndroidTest --stacktrace --console=plain 2>&1 | tee build-logs/connectedDebugAndroidTest.log
+
+      - name: Upload instrumentation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: instrumentation-logs
+          path: build-logs/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload instrumentation reports
         if: always()
