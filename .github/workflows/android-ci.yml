@@ -108,8 +108,14 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK packages
-        run: sdkmanager "platform-tools" "platforms;android-36.1" "build-tools;36.0.0"
+      - name: Install Android SDK and emulator packages
+        run: |
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-36.1" \
+            "build-tools;36.0.0" \
+            "emulator" \
+            "system-images;android-29;default;x86_64"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -117,18 +123,53 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      - name: Create Android virtual device
+        run: |
+          echo no | avdmanager create avd \
+            --force \
+            --name ci-api-29 \
+            --package "system-images;android-29;default;x86_64" \
+            --device "pixel_2"
+
+      - name: Start Android virtual device
+        run: |
+          mkdir -p build-logs
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+          fi
+          nohup "$ANDROID_HOME/emulator/emulator" \
+            -avd ci-api-29 \
+            -no-window \
+            -noaudio \
+            -no-boot-anim \
+            -camera-back none \
+            -gpu swiftshader_indirect \
+            > build-logs/emulator.log 2>&1 &
+          echo $! > build-logs/emulator.pid
+
+          adb wait-for-device
+          timeout 360 bash -c '
+            until [ "$(adb shell getprop sys.boot_completed | tr -d "\r")" = "1" ]; do
+              sleep 5
+            done
+          '
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb shell input keyevent 82
+
       - name: Run instrumentation checks
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          arch: x86_64
-          target: google_apis
-          profile: pixel_2
-          disable-animations: true
-          script: |
-            set -o pipefail
-            mkdir -p build-logs
-            ./gradlew :app:connectedDebugAndroidTest --stacktrace --console=plain 2>&1 | tee build-logs/connectedDebugAndroidTest.log
+        run: |
+          set -o pipefail
+          ./gradlew :app:connectedDebugAndroidTest --stacktrace --console=plain 2>&1 | tee build-logs/connectedDebugAndroidTest.log
+
+      - name: Stop Android virtual device
+        if: always()
+        run: |
+          adb emu kill || true
+          if [ -f build-logs/emulator.pid ]; then
+            kill "$(cat build-logs/emulator.pid)" || true
+          fi
 
       - name: Upload instrumentation logs
         if: always()
