@@ -64,6 +64,12 @@ import com.example.unseenandstrong.ui.resource.ResourceScreen
 import com.example.unseenandstrong.ui.resource.ResourceViewModel
 import com.example.unseenandstrong.ui.routine.RoutineScreen
 import com.example.unseenandstrong.ui.routine.RoutineViewModel
+import com.example.unseenandstrong.ui.speakstrong.AdvocacyPlansScreen
+import com.example.unseenandstrong.ui.speakstrong.AdvocacyPreparationScreen
+import com.example.unseenandstrong.ui.speakstrong.AdvocacyReflectionScreen
+import com.example.unseenandstrong.ui.speakstrong.AdvocacySelectionFallback
+import com.example.unseenandstrong.ui.speakstrong.AdvocacySupportViewModel
+import com.example.unseenandstrong.ui.speakstrong.ScriptRehearsalScreen
 import com.example.unseenandstrong.ui.speakstrong.SpeakStrongScreen
 import com.example.unseenandstrong.ui.speakstrong.SpeakStrongViewModel
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
@@ -76,102 +82,57 @@ import com.example.unseenandstrong.ui.vault.VaultScreen
 import com.example.unseenandstrong.ui.vault.VaultViewModel
 
 class MainActivity : ComponentActivity() {
-
-    private val database: UnseenDatabase by lazy {
-        UnseenDatabase.getDatabase(applicationContext)
+    private val database by lazy { UnseenDatabase.getDatabase(applicationContext) }
+    private val appViewModel by lazy { ViewModelProvider(this)[AppViewModel::class.java] }
+    private val checkInViewModel by lazy {
+        ViewModelProvider(this, CheckInViewModel.Factory(database.dailyCheckInDao()))[CheckInViewModel::class.java]
     }
-
-    private val appViewModel: AppViewModel by lazy {
-        ViewModelProvider(this)[AppViewModel::class.java]
+    private val journalViewModel by lazy {
+        ViewModelProvider(this, JournalViewModel.Factory(database.journalDao()))[JournalViewModel::class.java]
     }
-
-    private val checkInViewModel: CheckInViewModel by lazy {
-        ViewModelProvider(
-            this,
-            CheckInViewModel.Factory(database.dailyCheckInDao())
-        )[CheckInViewModel::class.java]
+    private val routineViewModel by lazy {
+        ViewModelProvider(this, RoutineViewModel.Factory(database.routineDao()))[RoutineViewModel::class.java]
     }
-
-    private val journalViewModel: JournalViewModel by lazy {
-        ViewModelProvider(
-            this,
-            JournalViewModel.Factory(database.journalDao())
-        )[JournalViewModel::class.java]
+    private val speakStrongViewModel by lazy {
+        ViewModelProvider(this, SpeakStrongViewModel.Factory(database.scriptDao()))[SpeakStrongViewModel::class.java]
     }
-
-    private val routineViewModel: RoutineViewModel by lazy {
-        ViewModelProvider(
-            this,
-            RoutineViewModel.Factory(database.routineDao())
-        )[RoutineViewModel::class.java]
+    private val advocacySupportViewModel by lazy {
+        ViewModelProvider(this, AdvocacySupportViewModel.Factory(database))[AdvocacySupportViewModel::class.java]
     }
-
-    private val speakStrongViewModel: SpeakStrongViewModel by lazy {
-        ViewModelProvider(
-            this,
-            SpeakStrongViewModel.Factory(database.scriptDao())
-        )[SpeakStrongViewModel::class.java]
+    private val accommodationViewModel by lazy { ViewModelProvider(this)[AccommodationViewModel::class.java] }
+    private val requestLogViewModel by lazy { ViewModelProvider(this)[RequestLogViewModel::class.java] }
+    private val benefitsTrackerViewModel by lazy { ViewModelProvider(this)[BenefitsTrackerViewModel::class.java] }
+    private val resourceViewModel by lazy { ViewModelProvider(this)[ResourceViewModel::class.java] }
+    private val interactionViewModel by lazy {
+        ViewModelProvider(this, InteractionViewModel.Factory(database.interactionDao()))[InteractionViewModel::class.java]
     }
-
-    private val accommodationViewModel: AccommodationViewModel by lazy {
-        ViewModelProvider(this)[AccommodationViewModel::class.java]
+    private val vaultViewModel by lazy {
+        ViewModelProvider(this, VaultViewModel.Factory(database.vaultDocumentDao()))[VaultViewModel::class.java]
     }
-
-    private val requestLogViewModel: RequestLogViewModel by lazy {
-        ViewModelProvider(this)[RequestLogViewModel::class.java]
-    }
-
-    private val benefitsTrackerViewModel: BenefitsTrackerViewModel by lazy {
-        ViewModelProvider(this)[BenefitsTrackerViewModel::class.java]
-    }
-
-    private val resourceViewModel: ResourceViewModel by lazy {
-        ViewModelProvider(this)[ResourceViewModel::class.java]
-    }
-
-    private val interactionViewModel: InteractionViewModel by lazy {
-        ViewModelProvider(
-            this,
-            InteractionViewModel.Factory(database.interactionDao())
-        )[InteractionViewModel::class.java]
-    }
-
-    private val vaultViewModel: VaultViewModel by lazy {
-        ViewModelProvider(
-            this,
-            VaultViewModel.Factory(database.vaultDocumentDao())
-        )[VaultViewModel::class.java]
-    }
-
-    private val medicationViewModel: MedicationViewModel by lazy {
+    private val medicationViewModel by lazy {
         ViewModelProvider(
             this,
             MedicationViewModel.Factory(
-                medicationDao = database.medicationDao(),
-                medLogDao = database.medLogDao(),
-                prnLogDao = database.prnLogDao(),
-                reactionDao = database.reactionDao()
+                database.medicationDao(),
+                database.medLogDao(),
+                database.prnLogDao(),
+                database.reactionDao()
             )
         )[MedicationViewModel::class.java]
     }
-
-    private val cycleViewModel: CycleViewModel by lazy {
+    private val cycleViewModel by lazy {
         ViewModelProvider(
             this,
-            CycleViewModel.Factory(
-                cycleLogDao = database.cycleLogDao(),
-                cycleSettingsDao = database.cycleSettingsDao()
-            )
+            CycleViewModel.Factory(database.cycleLogDao(), database.cycleSettingsDao())
         )[CycleViewModel::class.java]
     }
-
-    private val insightsViewModel: InsightsViewModel by lazy {
+    private val insightsViewModel by lazy {
         ViewModelProvider(
             this,
             InsightsViewModel.Factory(
-                dailyCheckInDao = database.dailyCheckInDao(),
-                medLogDao = database.medLogDao(),
-                cycleLogDao = database.cycleLogDao()
+                database.dailyCheckInDao(),
+                database.medLogDao(),
+                database.cycleLogDao()
             )
         )[InsightsViewModel::class.java]
     }
@@ -179,179 +140,168 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         setContent {
-            var currentScreen by rememberSaveable {
-                mutableStateOf(HomeScreen.CheckIn)
-            }
-            val isFlareDayActive by appViewModel.isFlareDayActive.collectAsState()
+            var currentScreen by rememberSaveable { mutableStateOf(HomeScreen.CheckIn) }
+            val isFlareDay by appViewModel.isFlareDayActive.collectAsState()
             val routineTasks by routineViewModel.tasks.collectAsState()
-            val appBackground = if (isFlareDayActive) {
-                NightLavender
-            } else {
-                SoftCloudGrey
-            }
+            val selectedTone by speakStrongViewModel.selectedTone.collectAsState()
+            val selectedScript by speakStrongViewModel.selectedScript.collectAsState()
+            val advocacySessions by advocacySupportViewModel.sessions.collectAsState()
+            val selectedSession by advocacySupportViewModel.selectedSession.collectAsState()
+            val background = if (isFlareDay) NightLavender else SoftCloudGrey
 
-            UnseenAndStrongTheme(
-                isFlareDay = isFlareDayActive,
-                content = {
-                    Scaffold(
-                        containerColor = appBackground,
-                        bottomBar = {
-                            BottomNavigationBar(
-                                currentScreen = currentScreen,
-                                isFlareDay = isFlareDayActive,
-                                onScreenSelected = { currentScreen = it }
-                            )
-                        }
-                    ) { innerPadding ->
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding),
-                            color = appBackground
-                        ) {
-                            Column(modifier = Modifier.fillMaxSize()) {
-                                FlareDayModeToggle(
-                                    isFlareDayActive = isFlareDayActive,
-                                    onToggle = appViewModel::toggleFlareDayMode
-                                )
-
-                                Crossfade(
-                                    targetState = currentScreen,
-                                    label = "screen_transition"
-                                ) { screen ->
-                                    when (screen) {
-                                        HomeScreen.CheckIn -> DailyCheckInScreen(
-                                            isFlareDay = isFlareDayActive,
-                                            onSave = checkInViewModel::saveCheckIn
-                                        )
-
-                                        HomeScreen.ComfortBox -> ComfortBoxScreen(
-                                            isFlareDay = isFlareDayActive
-                                        )
-
-                                        HomeScreen.Journal -> JournalScreen(
-                                            isFlareDay = isFlareDayActive,
-                                            entriesFlow = journalViewModel.entries,
-                                            onSaveWin = journalViewModel::saveUnseenWin,
-                                            onSaveEntry = journalViewModel::saveJournalEntry
-                                        )
-
-                                        HomeScreen.Routine -> RoutineScreen(
-                                            tasks = routineTasks,
-                                            onToggleTask = routineViewModel::toggleTask,
-                                            onAddTask = routineViewModel::addTask,
-                                            isFlareDay = isFlareDayActive
-                                        )
-
-                                        HomeScreen.Meds -> MedicationTrackerScreen(
-                                            viewModel = medicationViewModel,
-                                            isFlareDay = isFlareDayActive
-                                        )
-
-                                        HomeScreen.Cycle -> CycleTrackerScreen(
-                                            viewModel = cycleViewModel,
-                                            isFlareDay = isFlareDayActive
-                                        )
-
-                                        HomeScreen.SpeakStrong -> SpeakStrongScreen(
-                                            viewModel = speakStrongViewModel,
-                                            isFlareDay = isFlareDayActive,
-                                            onDraftAdaRequest = {
-                                                currentScreen = HomeScreen.Accommodation
-                                            },
-                                            onOpenResources = {
-                                                currentScreen = HomeScreen.Resource
-                                            },
-                                            onOpenBoundaryBuilder = {
-                                                currentScreen = HomeScreen.BoundaryBuilder
-                                            },
-                                            onOpenRequestLog = {
-                                                currentScreen = HomeScreen.RequestLog
-                                            },
-                                            onOpenBenefitsTracker = {
-                                                currentScreen = HomeScreen.BenefitsTracker
+            UnseenAndStrongTheme(isFlareDay = isFlareDay) {
+                Scaffold(
+                    containerColor = background,
+                    bottomBar = {
+                        BottomNavigationBar(currentScreen, isFlareDay) { currentScreen = it }
+                    }
+                ) { innerPadding ->
+                    Surface(
+                        modifier = Modifier.fillMaxSize().padding(innerPadding),
+                        color = background
+                    ) {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            FlareDayModeToggle(isFlareDay, appViewModel::toggleFlareDayMode)
+                            Crossfade(currentScreen, label = "screen_transition") { screen ->
+                                when (screen) {
+                                    HomeScreen.CheckIn -> DailyCheckInScreen(isFlareDay, checkInViewModel::saveCheckIn)
+                                    HomeScreen.ComfortBox -> ComfortBoxScreen(isFlareDay)
+                                    HomeScreen.Journal -> JournalScreen(
+                                        isFlareDay,
+                                        journalViewModel.entries,
+                                        journalViewModel::saveUnseenWin,
+                                        journalViewModel::saveJournalEntry
+                                    )
+                                    HomeScreen.Routine -> RoutineScreen(
+                                        routineTasks,
+                                        routineViewModel::toggleTask,
+                                        routineViewModel::addTask,
+                                        isFlareDay
+                                    )
+                                    HomeScreen.Meds -> MedicationTrackerScreen(medicationViewModel, isFlareDay)
+                                    HomeScreen.Cycle -> CycleTrackerScreen(cycleViewModel, isFlareDay)
+                                    HomeScreen.SpeakStrong -> SpeakStrongScreen(
+                                        viewModel = speakStrongViewModel,
+                                        isFlareDay = isFlareDay,
+                                        onDraftAdaRequest = { currentScreen = HomeScreen.Accommodation },
+                                        onOpenResources = { currentScreen = HomeScreen.Resource },
+                                        onOpenBoundaryBuilder = { currentScreen = HomeScreen.BoundaryBuilder },
+                                        onOpenRequestLog = { currentScreen = HomeScreen.RequestLog },
+                                        onOpenBenefitsTracker = { currentScreen = HomeScreen.BenefitsTracker },
+                                        onOpenAdvocacyPlans = { currentScreen = HomeScreen.AdvocacyPlans },
+                                        onOpenScript = { currentScreen = HomeScreen.Rehearsal }
+                                    )
+                                    HomeScreen.Rehearsal -> {
+                                        val script = selectedScript
+                                        if (script == null) {
+                                            AdvocacySelectionFallback(
+                                                "Choose a script before opening rehearsal.",
+                                                isFlareDay
+                                            ) { currentScreen = HomeScreen.SpeakStrong }
+                                        } else {
+                                            ScriptRehearsalScreen(
+                                                script,
+                                                selectedTone,
+                                                isFlareDay,
+                                                speakStrongViewModel::setTone,
+                                                { currentScreen = HomeScreen.SpeakStrong }
+                                            ) { scriptText ->
+                                                advocacySupportViewModel.beginPreparation(
+                                                    script,
+                                                    selectedTone,
+                                                    scriptText
+                                                ) { currentScreen = HomeScreen.AdvocacyPreparation }
                                             }
-                                        )
-
-                                        HomeScreen.Accommodation -> AccommodationScreen(
-                                            viewModel = accommodationViewModel,
-                                            isFlareDay = isFlareDayActive,
-                                            onBackToHub = {
-                                                currentScreen = HomeScreen.SpeakStrong
-                                            }
-                                        )
-
-                                        HomeScreen.Resource -> ResourceScreen(
-                                            viewModel = resourceViewModel,
-                                            isFlareDay = isFlareDayActive,
-                                            onBackToHub = {
-                                                currentScreen = HomeScreen.SpeakStrong
-                                            }
-                                        )
-
-                                        HomeScreen.BoundaryBuilder -> BoundaryBuilderScreen(
-                                            isFlareDay = isFlareDayActive,
-                                            onBackToHub = {
-                                                currentScreen = HomeScreen.SpeakStrong
-                                            }
-                                        )
-
-                                        HomeScreen.RequestLog -> RequestLogScreen(
-                                            viewModel = requestLogViewModel,
-                                            isFlareDay = isFlareDayActive,
-                                            onBackToHub = {
-                                                currentScreen = HomeScreen.SpeakStrong
-                                            }
-                                        )
-
-                                        HomeScreen.BenefitsTracker -> BenefitsTrackerScreen(
-                                            viewModel = benefitsTrackerViewModel,
-                                            isFlareDay = isFlareDayActive,
-                                            onBackToHub = {
-                                                currentScreen = HomeScreen.SpeakStrong
-                                            }
-                                        )
-
-                                        HomeScreen.Log -> InteractionScreen(
-                                            viewModel = interactionViewModel,
-                                            isFlareDay = isFlareDayActive,
-                                            onValidationCompleteNavigateBack = {
-                                                currentScreen = HomeScreen.SpeakStrong
-                                            }
-                                        )
-
-                                        HomeScreen.Vault -> VaultScreen(
-                                            viewModel = vaultViewModel,
-                                            isFlareDay = isFlareDayActive
-                                        )
+                                        }
                                     }
+                                    HomeScreen.AdvocacyPlans -> AdvocacyPlansScreen(
+                                        advocacySessions,
+                                        isFlareDay,
+                                        { currentScreen = HomeScreen.SpeakStrong },
+                                        { id ->
+                                            advocacySupportViewModel.selectSession(id)
+                                            currentScreen = HomeScreen.AdvocacyPreparation
+                                        },
+                                        { id ->
+                                            advocacySupportViewModel.selectSession(id)
+                                            currentScreen = HomeScreen.AdvocacyReflection
+                                        }
+                                    )
+                                    HomeScreen.AdvocacyPreparation -> {
+                                        val session = selectedSession
+                                        if (session == null) {
+                                            AdvocacySelectionFallback(
+                                                "Loading your saved preparation.",
+                                                isFlareDay
+                                            ) { currentScreen = HomeScreen.SpeakStrong }
+                                        } else {
+                                            AdvocacyPreparationScreen(
+                                                session,
+                                                isFlareDay,
+                                                { currentScreen = HomeScreen.AdvocacyPlans },
+                                                { input, onSaved ->
+                                                    advocacySupportViewModel.savePreparation(session, input, onSaved)
+                                                },
+                                                { currentScreen = HomeScreen.AdvocacyReflection }
+                                            )
+                                        }
+                                    }
+                                    HomeScreen.AdvocacyReflection -> {
+                                        val session = selectedSession
+                                        if (session == null) {
+                                            AdvocacySelectionFallback(
+                                                "Choose a saved plan before adding a reflection.",
+                                                isFlareDay
+                                            ) { currentScreen = HomeScreen.SpeakStrong }
+                                        } else {
+                                            AdvocacyReflectionScreen(
+                                                session,
+                                                isFlareDay,
+                                                { currentScreen = HomeScreen.AdvocacyPlans }
+                                            ) { input, onSaved ->
+                                                advocacySupportViewModel.saveReflection(session, input, onSaved)
+                                            }
+                                        }
+                                    }
+                                    HomeScreen.Accommodation -> AccommodationScreen(
+                                        accommodationViewModel,
+                                        isFlareDay
+                                    ) { currentScreen = HomeScreen.SpeakStrong }
+                                    HomeScreen.Resource -> ResourceScreen(
+                                        resourceViewModel,
+                                        isFlareDay
+                                    ) { currentScreen = HomeScreen.SpeakStrong }
+                                    HomeScreen.BoundaryBuilder -> BoundaryBuilderScreen(isFlareDay) {
+                                        currentScreen = HomeScreen.SpeakStrong
+                                    }
+                                    HomeScreen.RequestLog -> RequestLogScreen(
+                                        isFlareDay,
+                                        requestLogViewModel
+                                    ) { currentScreen = HomeScreen.SpeakStrong }
+                                    HomeScreen.BenefitsTracker -> BenefitsTrackerScreen(
+                                        isFlareDay,
+                                        benefitsTrackerViewModel
+                                    ) { currentScreen = HomeScreen.SpeakStrong }
+                                    HomeScreen.Log -> InteractionScreen(
+                                        interactionViewModel,
+                                        isFlareDay
+                                    ) { currentScreen = HomeScreen.SpeakStrong }
+                                    HomeScreen.Vault -> VaultScreen(vaultViewModel, isFlareDay)
                                 }
                             }
                         }
                     }
                 }
-            )
+            }
         }
     }
 }
 
 private enum class HomeScreen {
-    CheckIn,
-    ComfortBox,
-    Journal,
-    Routine,
-    Meds,
-    Cycle,
-    SpeakStrong,
-    Accommodation,
-    Resource,
-    BoundaryBuilder,
-    RequestLog,
-    BenefitsTracker,
-    Log,
-    Vault;
+    CheckIn, ComfortBox, Journal, Routine, Meds, Cycle, SpeakStrong,
+    Rehearsal, AdvocacyPlans, AdvocacyPreparation, AdvocacyReflection,
+    Accommodation, Resource, BoundaryBuilder, RequestLog, BenefitsTracker, Log, Vault;
 
     val label: String
         get() = when (this) {
@@ -362,6 +312,10 @@ private enum class HomeScreen {
             Meds -> "Meds"
             Cycle -> "Cycle"
             SpeakStrong -> "Speak Strong"
+            Rehearsal -> "Rehearsal"
+            AdvocacyPlans -> "Advocacy Plans"
+            AdvocacyPreparation -> "Preparation"
+            AdvocacyReflection -> "Reflection"
             Accommodation -> "Accommodation"
             Resource -> "Resources"
             BoundaryBuilder -> "Boundary Builder"
@@ -375,17 +329,13 @@ private enum class HomeScreen {
         get() = when (this) {
             CheckIn -> Icons.Default.CheckCircle
             ComfortBox -> Icons.Default.Favorite
-            Journal -> Icons.Default.Edit
+            Journal, SpeakStrong, Rehearsal -> Icons.Default.Edit
             Routine -> Icons.AutoMirrored.Filled.List
             Meds -> Icons.Default.Healing
             Cycle -> Icons.Default.Spa
-            SpeakStrong -> Icons.Default.Edit
-            Accommodation -> Icons.Default.Description
-            Resource -> Icons.Default.Description
-            BoundaryBuilder -> Icons.Default.Description
-            RequestLog -> Icons.AutoMirrored.Filled.Assignment
-            BenefitsTracker -> Icons.Default.Description
-            Log -> Icons.AutoMirrored.Filled.Assignment
+            AdvocacyPlans, RequestLog, Log -> Icons.AutoMirrored.Filled.Assignment
+            AdvocacyPreparation, AdvocacyReflection, Accommodation, Resource,
+            BoundaryBuilder, BenefitsTracker -> Icons.Default.Description
             Vault -> Icons.Default.Folder
         }
 }
@@ -408,17 +358,18 @@ private fun BottomNavigationBar(
         HomeScreen.Vault
     )
     val selectedScreen = when (currentScreen) {
+        HomeScreen.Rehearsal,
+        HomeScreen.AdvocacyPlans,
+        HomeScreen.AdvocacyPreparation,
+        HomeScreen.AdvocacyReflection,
         HomeScreen.Accommodation,
         HomeScreen.Resource,
         HomeScreen.BoundaryBuilder,
         HomeScreen.RequestLog,
         HomeScreen.BenefitsTracker -> HomeScreen.SpeakStrong
-
         else -> currentScreen
     }
-    val selectedIndex = topLevelScreens
-        .indexOf(selectedScreen)
-        .coerceAtLeast(0)
+    val selectedIndex = topLevelScreens.indexOf(selectedScreen).coerceAtLeast(0)
 
     ScrollableTabRow(
         selectedTabIndex = selectedIndex,
@@ -432,18 +383,9 @@ private fun BottomNavigationBar(
             Tab(
                 selected = selectedScreen == screen,
                 onClick = { onScreenSelected(screen) },
-                text = { Text(text = screen.label) },
-                icon = {
-                    Icon(
-                        imageVector = screen.icon,
-                        contentDescription = screen.label
-                    )
-                },
-                selectedContentColor = if (isFlareDay) {
-                    SoftBlushPink
-                } else {
-                    LavenderPurple
-                },
+                text = { Text(screen.label) },
+                icon = { Icon(screen.icon, contentDescription = screen.label) },
+                selectedContentColor = if (isFlareDay) SoftBlushPink else LavenderPurple,
                 unselectedContentColor = DeepFogGrey
             )
         }
@@ -451,21 +393,13 @@ private fun BottomNavigationBar(
 }
 
 @Composable
-private fun FlareDayModeToggle(
-    isFlareDayActive: Boolean,
-    onToggle: () -> Unit
-) {
+private fun FlareDayModeToggle(isFlareDayActive: Boolean, onToggle: () -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "Flare Day Mode",
-            color = DeepFogGrey
-        )
+        Text("Flare Day Mode", color = DeepFogGrey)
         Switch(
             checked = isFlareDayActive,
             onCheckedChange = { onToggle() },

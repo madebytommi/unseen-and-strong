@@ -11,18 +11,22 @@ import java.util.TimeZone
 
 class DeadlineDateUtilsTest {
     private val chicago = TimeZone.getTimeZone("America/Chicago")
+    private val tokyo = TimeZone.getTimeZone("Asia/Tokyo")
 
     @Test
     fun pickerSelectionRoundTripsWithoutChangingCalendarDay() {
         val pickerMillis = LocalDate.of(2026, 11, 1)
-            .atStartOfDay()
-            .toInstant(ZoneOffset.UTC)
-            .toEpochMilli()
-
+            .atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
         val storedMillis = DeadlineDateUtils.fromPickerUtcMillis(pickerMillis, chicago)
-        val restoredPickerMillis = DeadlineDateUtils.toPickerUtcMillis(storedMillis, chicago)
+        assertEquals(pickerMillis, DeadlineDateUtils.toPickerUtcMillis(storedMillis, chicago))
+    }
 
-        assertEquals(pickerMillis, restoredPickerMillis)
+    @Test
+    fun pickerSelectionRoundTripsInPositiveUtcOffset() {
+        val pickerMillis = LocalDate.of(2026, 7, 28)
+            .atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
+        val storedMillis = DeadlineDateUtils.fromPickerUtcMillis(pickerMillis, tokyo)
+        assertEquals(pickerMillis, DeadlineDateUtils.toPickerUtcMillis(storedMillis, tokyo))
     }
 
     @Test
@@ -32,14 +36,8 @@ class DeadlineDateUtilsTest {
             set(2026, Calendar.MARCH, 8, 12, 0, 0)
         }.timeInMillis
         val expectedPickerMillis = LocalDate.of(2026, 3, 8)
-            .atStartOfDay()
-            .toInstant(ZoneOffset.UTC)
-            .toEpochMilli()
-
-        assertEquals(
-            expectedPickerMillis,
-            DeadlineDateUtils.toPickerUtcMillis(storedMillis, chicago)
-        )
+            .atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
+        assertEquals(expectedPickerMillis, DeadlineDateUtils.toPickerUtcMillis(storedMillis, chicago))
     }
 
     @Test
@@ -51,11 +49,8 @@ class DeadlineDateUtilsTest {
     fun approachingDeadlineUsesCalendarDaysAcrossDstChanges() {
         val now = Instant.parse("2026-03-07T18:00:00Z").toEpochMilli()
         val pickerMillis = LocalDate.of(2026, 3, 14)
-            .atStartOfDay()
-            .toInstant(ZoneOffset.UTC)
-            .toEpochMilli()
+            .atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
         val deadline = DeadlineDateUtils.fromPickerUtcMillis(pickerMillis, chicago)
-
         assertEquals(7, DeadlineDateUtils.daysUntil(deadline, now, chicago))
     }
 }

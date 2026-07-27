@@ -2,16 +2,19 @@ package com.example.unseenandstrong.ui.speakstrong
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.unseenandstrong.data.local.script.ScriptEntity
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
@@ -35,119 +39,108 @@ fun SpeakStrongScreen(
     onOpenResources: () -> Unit = {},
     onOpenBoundaryBuilder: () -> Unit = {},
     onOpenRequestLog: () -> Unit = {},
-    onOpenBenefitsTracker: () -> Unit = {}
+    onOpenBenefitsTracker: () -> Unit = {},
+    onOpenAdvocacyPlans: () -> Unit = {},
+    onOpenScript: (ScriptEntity) -> Unit = {}
 ) {
     val backgroundColor = if (isFlareDay) NightLavender else SoftCloudGrey
     val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
-
     val selectedTone by viewModel.selectedTone.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
     val scripts by viewModel.scripts.collectAsState()
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = backgroundColor
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
+    Surface(modifier = Modifier.fillMaxSize(), color = backgroundColor) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Button(
-                onClick = onDraftAdaRequest,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = LavenderPurple,
-                    contentColor = textColor
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Draft ADA Request")
+            item {
+                Text("Speak Strong", style = MaterialTheme.typography.headlineMedium, color = textColor)
             }
-
-            Button(
-                onClick = onOpenResources,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SoftBlushPink,
-                    contentColor = textColor
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Advocacy Resources")
+            item {
+                Text(
+                    "Choose the support that fits the conversation in front of you.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = textColor
+                )
             }
+            item { AdvocacyHubButton("Draft ADA Request", onDraftAdaRequest, true) }
+            item { AdvocacyHubButton("Advocacy Resources", onOpenResources, false) }
+            item { AdvocacyHubButton("Boundary Builder", onOpenBoundaryBuilder, true) }
+            item { AdvocacyHubButton("Request Log", onOpenRequestLog, false) }
+            item { AdvocacyHubButton("Disability Benefits Tracker", onOpenBenefitsTracker, true) }
+            item { AdvocacyHubButton("Saved Advocacy Plans", onOpenAdvocacyPlans, false) }
 
-            Button(
-                onClick = onOpenBoundaryBuilder,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = LavenderPurple.copy(alpha = 0.9f),
-                    contentColor = textColor
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Boundary Builder")
+            item {
+                Text(
+                    "Choose a tone",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = textColor,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
-
-            Button(
-                onClick = onOpenRequestLog,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SoftBlushPink.copy(alpha = 0.9f),
-                    contentColor = textColor
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Request Log")
-            }
-
-            Button(
-                onClick = onOpenBenefitsTracker,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = LavenderPurple.copy(alpha = 0.82f),
-                    contentColor = textColor
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Disability Benefits Tracker")
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                SpeakStrongViewModel.Tone.entries.forEach { tone ->
-                    val isSelected = selectedTone == tone
-                    Button(
-                        onClick = { viewModel.setTone(tone) },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isSelected) {
-                                LavenderPurple
-                            } else {
-                                SoftBlushPink
+            item {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(SpeakStrongViewModel.Tone.entries) { tone ->
+                        FilterChip(
+                            selected = tone == selectedTone,
+                            onClick = { viewModel.setTone(tone) },
+                            label = {
+                                Text(tone.name.lowercase().replaceFirstChar { it.uppercase() })
                             },
-                            contentColor = textColor
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = tone.name
-                                .lowercase()
-                                .replaceFirstChar { it.uppercase() },
-                            style = MaterialTheme.typography.labelLarge
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = LavenderPurple,
+                                selectedLabelColor = PaleCloudWhite
+                            )
+                        )
+                    }
+                }
+            }
+            item {
+                Text(
+                    "Choose a category",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = textColor
+                )
+            }
+            item {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(SpeakStrongCatalog.categories, key = { it }) { category ->
+                        FilterChip(
+                            selected = category == selectedCategory,
+                            onClick = { viewModel.setCategory(category) },
+                            label = { Text(category) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = LavenderPurple,
+                                selectedLabelColor = PaleCloudWhite
+                            )
                         )
                     }
                 }
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            if (scripts.isEmpty()) {
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isFlareDay) NightLavender.copy(alpha = 0.82f) else PaleCloudWhite
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            "No scripts are available in this category yet.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = textColor,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            } else {
                 items(scripts, key = { it.id }) { script ->
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isFlareDay) {
-                                NightLavender.copy(alpha = 0.8f)
-                            } else {
-                                SoftCloudGrey.copy(alpha = 0.8f)
-                            }
+                            containerColor = if (isFlareDay) NightLavender.copy(alpha = 0.82f) else PaleCloudWhite
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -156,24 +149,57 @@ fun SpeakStrongScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = script.title,
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = textColor
+                                script.category,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = if (isFlareDay) SoftBlushPink else LavenderPurple
                             )
-                            val scriptText = when (selectedTone) {
-                                SpeakStrongViewModel.Tone.GENTLE -> script.gentleText
-                                SpeakStrongViewModel.Tone.DIRECT -> script.directText
-                                SpeakStrongViewModel.Tone.FIRM -> script.firmText
-                            }
+                            Text(script.title, style = MaterialTheme.typography.headlineSmall, color = textColor)
                             Text(
-                                text = scriptText,
+                                script.textFor(selectedTone),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = textColor
                             )
+                            Button(
+                                onClick = {
+                                    viewModel.selectScript(script)
+                                    onOpenScript(script)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = LavenderPurple,
+                                    contentColor = PaleCloudWhite
+                                )
+                            ) {
+                                Text("Practice this script")
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun AdvocacyHubButton(
+    label: String,
+    onClick: () -> Unit,
+    emphasized: Boolean
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (emphasized) LavenderPurple else SoftBlushPink,
+            contentColor = if (emphasized) PaleCloudWhite else DeepFogGrey
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(label)
+    }
+}
+
+internal fun ScriptEntity.textFor(tone: SpeakStrongViewModel.Tone): String = when (tone) {
+    SpeakStrongViewModel.Tone.GENTLE -> gentleText
+    SpeakStrongViewModel.Tone.DIRECT -> directText
+    SpeakStrongViewModel.Tone.FIRM -> firmText
 }
