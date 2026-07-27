@@ -2,26 +2,26 @@ package com.example.unseenandstrong.data.local
 
 import android.content.Context
 import androidx.room.Database
-import androidx.room.migration.Migration
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.unseenandstrong.data.local.accommodation.AccommodationRequestDao
+import com.example.unseenandstrong.data.local.accommodation.AccommodationRequestEntity
+import com.example.unseenandstrong.data.local.advocacy.AdvocacySessionDao
+import com.example.unseenandstrong.data.local.advocacy.AdvocacySessionEntity
+import com.example.unseenandstrong.data.local.benefits.BenefitsStageDao
+import com.example.unseenandstrong.data.local.benefits.BenefitsStageEntity
 import com.example.unseenandstrong.data.local.checkin.DailyCheckInDao
 import com.example.unseenandstrong.data.local.checkin.DailyCheckInEntity
+import com.example.unseenandstrong.data.local.cycle.CycleLogDao
+import com.example.unseenandstrong.data.local.cycle.CycleLogEntity
+import com.example.unseenandstrong.data.local.cycle.CycleSettingsDao
+import com.example.unseenandstrong.data.local.cycle.CycleSettingsEntity
 import com.example.unseenandstrong.data.local.interaction.InteractionDao
 import com.example.unseenandstrong.data.local.interaction.InteractionEntity
 import com.example.unseenandstrong.data.local.journal.JournalDao
 import com.example.unseenandstrong.data.local.journal.JournalEntryEntity
-import com.example.unseenandstrong.data.local.routine.RoutineDao
-import com.example.unseenandstrong.data.local.routine.RoutineTaskEntity
-import com.example.unseenandstrong.data.local.script.ScriptDao
-import com.example.unseenandstrong.data.local.script.ScriptEntity
-import com.example.unseenandstrong.data.local.vault.VaultDocumentDao
-import com.example.unseenandstrong.data.local.vault.VaultDocumentEntity
-import com.example.unseenandstrong.data.local.accommodation.AccommodationRequestEntity
-import com.example.unseenandstrong.data.local.accommodation.AccommodationRequestDao
-import com.example.unseenandstrong.data.local.benefits.BenefitsStageEntity
-import com.example.unseenandstrong.data.local.benefits.BenefitsStageDao
 import com.example.unseenandstrong.data.local.medication.MedLogDao
 import com.example.unseenandstrong.data.local.medication.MedLogEntity
 import com.example.unseenandstrong.data.local.medication.MedicationDao
@@ -30,10 +30,13 @@ import com.example.unseenandstrong.data.local.medication.PRNLogDao
 import com.example.unseenandstrong.data.local.medication.PRNLogEntity
 import com.example.unseenandstrong.data.local.medication.ReactionDao
 import com.example.unseenandstrong.data.local.medication.ReactionEntity
-import com.example.unseenandstrong.data.local.cycle.CycleLogDao
-import com.example.unseenandstrong.data.local.cycle.CycleLogEntity
-import com.example.unseenandstrong.data.local.cycle.CycleSettingsDao
-import com.example.unseenandstrong.data.local.cycle.CycleSettingsEntity
+import com.example.unseenandstrong.data.local.routine.RoutineDao
+import com.example.unseenandstrong.data.local.routine.RoutineTaskEntity
+import com.example.unseenandstrong.data.local.script.ScriptDao
+import com.example.unseenandstrong.data.local.script.ScriptEntity
+import com.example.unseenandstrong.data.local.script.ScriptSeedData
+import com.example.unseenandstrong.data.local.vault.VaultDocumentDao
+import com.example.unseenandstrong.data.local.vault.VaultDocumentEntity
 
 @Database(
     entities = [
@@ -50,9 +53,10 @@ import com.example.unseenandstrong.data.local.cycle.CycleSettingsEntity
         PRNLogEntity::class,
         ReactionEntity::class,
         CycleLogEntity::class,
-        CycleSettingsEntity::class
+        CycleSettingsEntity::class,
+        AdvocacySessionEntity::class
     ],
-    version = 12,
+    version = 13,
     exportSchema = false
 )
 abstract class UnseenDatabase : RoomDatabase() {
@@ -71,6 +75,7 @@ abstract class UnseenDatabase : RoomDatabase() {
     abstract fun reactionDao(): ReactionDao
     abstract fun cycleLogDao(): CycleLogDao
     abstract fun cycleSettingsDao(): CycleSettingsDao
+    abstract fun advocacySessionDao(): AdvocacySessionDao
 
     companion object {
         @Volatile
@@ -83,7 +88,15 @@ abstract class UnseenDatabase : RoomDatabase() {
                     UnseenDatabase::class.java,
                     "unseen_database"
                 )
-                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
+                    .addMigrations(
+                        MIGRATION_6_7,
+                        MIGRATION_7_8,
+                        MIGRATION_8_9,
+                        MIGRATION_9_10,
+                        MIGRATION_10_11,
+                        MIGRATION_11_12,
+                        MIGRATION_12_13
+                    )
                     .addCallback(SEED_SCRIPTS_CALLBACK)
                     .fallbackToDestructiveMigration()
                     .build()
@@ -94,9 +107,7 @@ abstract class UnseenDatabase : RoomDatabase() {
 
         private val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL(
-                    "ALTER TABLE interactions ADD COLUMN followUpDateMillis INTEGER"
-                )
+                db.execSQL("ALTER TABLE interactions ADD COLUMN followUpDateMillis INTEGER")
             }
         }
 
@@ -116,23 +127,15 @@ abstract class UnseenDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-
                 db.execSQL(
                     """
                     INSERT INTO interactions_new (id, timestamp, needsFollowUp, followUpDate, category, personName, organization, notes)
-                    SELECT
-                        id,
-                        timestamp,
+                    SELECT id, timestamp,
                         CASE WHEN followUpDateMillis IS NULL THEN 0 ELSE 1 END,
-                        followUpDateMillis,
-                        category,
-                        personName,
-                        organization,
-                        notes
+                        followUpDateMillis, category, personName, organization, notes
                     FROM interactions
                     """.trimIndent()
                 )
-
                 db.execSQL("DROP TABLE interactions")
                 db.execSQL("ALTER TABLE interactions_new RENAME TO interactions")
             }
@@ -169,10 +172,7 @@ abstract class UnseenDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-                db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (1, 'Initial Application', 'Pending', '')")
-                db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (2, 'Medical Evaluation', 'Pending', '')")
-                db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (3, 'Reconsideration (Appeal 1)', 'Pending', '')")
-                db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (4, 'Hearing (Appeal 2)', 'Pending', '')")
+                insertBenefitsStages(db)
             }
         }
 
@@ -204,7 +204,6 @@ abstract class UnseenDatabase : RoomDatabase() {
                     """.trimIndent()
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_med_logs_medId ON med_logs(medId)")
-
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS prn_logs (
@@ -219,7 +218,6 @@ abstract class UnseenDatabase : RoomDatabase() {
                     """.trimIndent()
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_prn_logs_medId ON prn_logs(medId)")
-
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS reactions (
@@ -256,60 +254,58 @@ abstract class UnseenDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
+                db.execSQL("INSERT OR IGNORE INTO cycle_settings (id, trackingMode) VALUES (1, 'Standard')")
+            }
+        }
+
+        internal val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
-                    "INSERT OR IGNORE INTO cycle_settings (id, trackingMode) VALUES (1, 'Standard')"
+                    """
+                    CREATE TABLE IF NOT EXISTS advocacy_sessions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        scriptId INTEGER,
+                        scriptTitle TEXT NOT NULL,
+                        scriptCategory TEXT NOT NULL,
+                        selectedTone TEXT NOT NULL,
+                        scriptTextSnapshot TEXT NOT NULL,
+                        personName TEXT NOT NULL,
+                        organization TEXT NOT NULL,
+                        desiredOutcome TEXT NOT NULL,
+                        smallGoal TEXT NOT NULL,
+                        preparationNote TEXT NOT NULL,
+                        mayNeedFollowUp INTEGER NOT NULL,
+                        createdAt INTEGER NOT NULL,
+                        conversationHappened TEXT NOT NULL,
+                        outcomeSummary TEXT NOT NULL,
+                        emotionalReflection TEXT NOT NULL,
+                        goalResult TEXT NOT NULL,
+                        needsFollowUp INTEGER NOT NULL,
+                        followUpDate INTEGER,
+                        reflectionNote TEXT NOT NULL,
+                        reflectionComplete INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        linkedInteractionId INTEGER
+                    )
+                    """.trimIndent()
                 )
+                ScriptSeedData.insertMissing(db)
             }
         }
 
         private val SEED_SCRIPTS_CALLBACK = object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-
-                db.execSQL(
-                    """
-                    INSERT INTO scripts (category, title, gentleText, directText, firmText)
-                    VALUES (
-                        'Doctor',
-                        'Requesting symptom support',
-                        'I have been managing persistent symptoms, and I would really appreciate your help making a plan that feels manageable for me.',
-                        'My symptoms are affecting daily function. I need clear next steps for treatment and follow-up.',
-                        'These symptoms are significantly impacting my life. I need this concern documented and a concrete care plan today.'
-                    )
-                    """.trimIndent()
-                )
-
-                db.execSQL(
-                    """
-                    INSERT INTO scripts (category, title, gentleText, directText, firmText)
-                    VALUES (
-                        'Work',
-                        'Asking for reasonable flexibility',
-                        'I am committed to my role and would appreciate a small adjustment so I can keep contributing consistently.',
-                        'I need a reasonable accommodation to manage my health while maintaining my work responsibilities.',
-                        'I am formally requesting accommodations so I can perform essential duties safely and sustainably.'
-                    )
-                    """.trimIndent()
-                )
-
-                db.execSQL(
-                    """
-                    INSERT INTO scripts (category, title, gentleText, directText, firmText)
-                    VALUES (
-                        'Boundary',
-                        'Protecting energy and rest',
-                        'I care about this, but I need to pause and rest right now. I can revisit this when I have capacity.',
-                        'I cannot take this on today. I need to protect my energy and keep my commitments realistic.',
-                        'I am not available for this. Please respect that decision and do not pressure me to explain further.'
-                    )
-                    """.trimIndent()
-                )
-
-                db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (1, 'Initial Application', 'Pending', '')")
-                db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (2, 'Medical Evaluation', 'Pending', '')")
-                db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (3, 'Reconsideration (Appeal 1)', 'Pending', '')")
-                db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (4, 'Hearing (Appeal 2)', 'Pending', '')")
+                ScriptSeedData.insertMissing(db)
+                insertBenefitsStages(db)
             }
+        }
+
+        private fun insertBenefitsStages(db: SupportSQLiteDatabase) {
+            db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (1, 'Initial Application', 'Pending', '')")
+            db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (2, 'Medical Evaluation', 'Pending', '')")
+            db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (3, 'Reconsideration (Appeal 1)', 'Pending', '')")
+            db.execSQL("INSERT INTO benefits_stages (stageOrder, stageName, status, notes) VALUES (4, 'Hearing (Appeal 2)', 'Pending', '')")
         }
     }
 }
