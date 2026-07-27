@@ -2,7 +2,9 @@ package com.example.unseenandstrong.ui.benefits
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 import java.util.TimeZone
 
 object DeadlineDateUtils {
@@ -63,5 +65,10 @@ object DeadlineDateUtils {
         val today = Instant.ofEpochMilli(nowMillis).atZone(zoneId).toLocalDate()
         val deadline = Instant.ofEpochMilli(deadlineMillis).atZone(zoneId).toLocalDate()
         return ChronoUnit.DAYS.between(today, deadline)
+    }
+
+    fun formatMillisAsDate(millis: Long): String {
+        val sdf = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+        return sdf.format(millis)
     }
 }

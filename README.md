@@ -67,11 +67,11 @@ Currently implemented and accessible:
 - Document Vault for local image-based medical, insurance, and work documents
 - Request Log for FMLA, ADA, and disability requests
 - Disability Benefits Tracker with persisted stages, statuses, notes, completed dates, deadlines, and approaching-deadline support
+- Dedicated STD/LTD claim workflows with checklists and Interaction/Document linking
 
 Still needed before Phase 2 can be called complete:
 
 - Local notification reminders for follow-ups
-- Fuller dedicated STD/LTD workflows
 - Audio-based rehearsal or recording, if retained in the final Phase 2 scope
 - Broader final testing and CI hardening
 

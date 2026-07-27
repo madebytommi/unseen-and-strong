@@ -12,6 +12,11 @@ import com.example.unseenandstrong.data.local.advocacy.AdvocacySessionDao
 import com.example.unseenandstrong.data.local.advocacy.AdvocacySessionEntity
 import com.example.unseenandstrong.data.local.benefits.BenefitsStageDao
 import com.example.unseenandstrong.data.local.benefits.BenefitsStageEntity
+import com.example.unseenandstrong.data.local.claims.ClaimDocumentCrossRef
+import com.example.unseenandstrong.data.local.claims.ClaimInteractionCrossRef
+import com.example.unseenandstrong.data.local.claims.DisabilityClaimDao
+import com.example.unseenandstrong.data.local.claims.DisabilityClaimEntity
+import com.example.unseenandstrong.data.local.claims.DisabilityClaimTaskEntity
 import com.example.unseenandstrong.data.local.checkin.DailyCheckInDao
 import com.example.unseenandstrong.data.local.checkin.DailyCheckInEntity
 import com.example.unseenandstrong.data.local.cycle.CycleLogDao
@@ -54,9 +59,13 @@ import com.example.unseenandstrong.data.local.vault.VaultDocumentEntity
         ReactionEntity::class,
         CycleLogEntity::class,
         CycleSettingsEntity::class,
-        AdvocacySessionEntity::class
+        AdvocacySessionEntity::class,
+        DisabilityClaimEntity::class,
+        DisabilityClaimTaskEntity::class,
+        ClaimInteractionCrossRef::class,
+        ClaimDocumentCrossRef::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = false
 )
 abstract class UnseenDatabase : RoomDatabase() {
@@ -76,6 +85,7 @@ abstract class UnseenDatabase : RoomDatabase() {
     abstract fun cycleLogDao(): CycleLogDao
     abstract fun cycleSettingsDao(): CycleSettingsDao
     abstract fun advocacySessionDao(): AdvocacySessionDao
+    abstract fun disabilityClaimDao(): DisabilityClaimDao
 
     companion object {
         @Volatile
@@ -95,7 +105,8 @@ abstract class UnseenDatabase : RoomDatabase() {
                         MIGRATION_9_10,
                         MIGRATION_10_11,
                         MIGRATION_11_12,
-                        MIGRATION_12_13
+                        MIGRATION_12_13,
+                        MIGRATION_13_14
                     )
                     .addCallback(SEED_SCRIPTS_CALLBACK)
                     .fallbackToDestructiveMigration()
@@ -290,6 +301,75 @@ abstract class UnseenDatabase : RoomDatabase() {
                     """.trimIndent()
                 )
                 ScriptSeedData.insertMissing(db)
+            }
+        }
+
+        internal val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS disability_claims (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        claimType TEXT NOT NULL,
+                        employerName TEXT NOT NULL,
+                        administratorName TEXT NOT NULL,
+                        claimNumber TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        filedDate INTEGER,
+                        leaveStartDate INTEGER,
+                        leaveEndDate INTEGER,
+                        benefitStartDate INTEGER,
+                        benefitEndDate INTEGER,
+                        decisionDate INTEGER,
+                        appealDeadline INTEGER,
+                        nextAction TEXT NOT NULL,
+                        nextActionDueDate INTEGER,
+                        notes TEXT NOT NULL,
+                        linkedRequestId INTEGER,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS disability_claim_tasks (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        claimId INTEGER NOT NULL,
+                        category TEXT NOT NULL,
+                        title TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        dueDate INTEGER,
+                        completedDate INTEGER,
+                        notes TEXT NOT NULL,
+                        sortOrder INTEGER NOT NULL,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        FOREIGN KEY(claimId) REFERENCES disability_claims(id) ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_disability_claim_tasks_claimId ON disability_claim_tasks(claimId)")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS claim_interaction_cross_ref (
+                        claimId INTEGER NOT NULL,
+                        interactionId INTEGER NOT NULL,
+                        PRIMARY KEY(claimId, interactionId)
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_claim_interaction_cross_ref_interactionId ON claim_interaction_cross_ref(interactionId)")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS claim_document_cross_ref (
+                        claimId INTEGER NOT NULL,
+                        documentId INTEGER NOT NULL,
+                        PRIMARY KEY(claimId, documentId)
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_claim_document_cross_ref_documentId ON claim_document_cross_ref(documentId)")
             }
         }
 
