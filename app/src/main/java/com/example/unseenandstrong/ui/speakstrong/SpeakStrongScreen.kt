@@ -33,7 +33,9 @@ fun SpeakStrongScreen(
     isFlareDay: Boolean = false,
     onDraftAdaRequest: () -> Unit = {},
     onOpenResources: () -> Unit = {},
-    onOpenBoundaryBuilder: () -> Unit = {}
+    onOpenBoundaryBuilder: () -> Unit = {},
+    onOpenRequestLog: () -> Unit = {},
+    onOpenBenefitsTracker: () -> Unit = {}
 ) {
     val backgroundColor = if (isFlareDay) NightLavender else SoftCloudGrey
     val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
@@ -49,7 +51,7 @@ fun SpeakStrongScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Button(
                 onClick = onDraftAdaRequest,
@@ -84,7 +86,28 @@ fun SpeakStrongScreen(
                 Text(text = "Boundary Builder")
             }
 
-            // Tone Toggle Row
+            Button(
+                onClick = onOpenRequestLog,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SoftBlushPink.copy(alpha = 0.9f),
+                    contentColor = textColor
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "Request Log")
+            }
+
+            Button(
+                onClick = onOpenBenefitsTracker,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = LavenderPurple.copy(alpha = 0.82f),
+                    contentColor = textColor
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "Disability Benefits Tracker")
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -94,20 +117,25 @@ fun SpeakStrongScreen(
                     Button(
                         onClick = { viewModel.setTone(tone) },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isSelected) LavenderPurple else SoftBlushPink,
+                            containerColor = if (isSelected) {
+                                LavenderPurple
+                            } else {
+                                SoftBlushPink
+                            },
                             contentColor = textColor
                         ),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = tone.name.lowercase().replaceFirstChar { it.uppercase() },
+                            text = tone.name
+                                .lowercase()
+                                .replaceFirstChar { it.uppercase() },
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
                 }
             }
 
-            // Script List
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -115,7 +143,11 @@ fun SpeakStrongScreen(
                 items(scripts, key = { it.id }) { script ->
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isFlareDay) NightLavender.copy(alpha = 0.8f) else SoftCloudGrey.copy(alpha = 0.8f)
+                            containerColor = if (isFlareDay) {
+                                NightLavender.copy(alpha = 0.8f)
+                            } else {
+                                SoftCloudGrey.copy(alpha = 0.8f)
+                            }
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
