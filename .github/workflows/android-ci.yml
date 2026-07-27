@@ -55,6 +55,11 @@ jobs:
           set -o pipefail
           ./gradlew :app:testDebugUnitTest --stacktrace --console=plain 2>&1 | tee build-logs/testDebugUnitTest.log
 
+      - name: Compile instrumentation tests
+        run: |
+          set -o pipefail
+          ./gradlew :app:compileDebugAndroidTestKotlin --stacktrace --console=plain 2>&1 | tee build-logs/compileDebugAndroidTestKotlin.log
+
       - name: Run Android lint
         run: |
           set -o pipefail
