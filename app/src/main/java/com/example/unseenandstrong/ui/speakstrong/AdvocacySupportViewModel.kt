@@ -8,6 +8,7 @@ import com.example.unseenandstrong.data.local.UnseenDatabase
 import com.example.unseenandstrong.data.local.advocacy.AdvocacySessionEntity
 import com.example.unseenandstrong.data.local.interaction.InteractionEntity
 import com.example.unseenandstrong.data.local.script.ScriptEntity
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +38,7 @@ data class AdvocacyReflectionInput(
     val exportToInteractionLog: Boolean
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AdvocacySupportViewModel(
     private val database: UnseenDatabase
 ) : ViewModel() {
