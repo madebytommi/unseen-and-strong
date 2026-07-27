@@ -166,9 +166,14 @@ jobs:
       - name: Stop Android virtual device
         if: always()
         run: |
-          adb emu kill || true
+          if adb get-state >/dev/null 2>&1; then
+            adb emu kill
+          fi
           if [ -f build-logs/emulator.pid ]; then
-            kill "$(cat build-logs/emulator.pid)" || true
+            emulator_pid="$(cat build-logs/emulator.pid)"
+            if kill -0 "$emulator_pid" 2>/dev/null; then
+              kill "$emulator_pid"
+            fi
           fi
 
       - name: Upload instrumentation logs
