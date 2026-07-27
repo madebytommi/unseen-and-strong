@@ -94,8 +94,6 @@ jobs:
     needs: validation
     runs-on: ubuntu-latest
     timeout-minutes: 50
-    env:
-      ANDROID_AVD_HOME: ${{ runner.temp }}/android-avd
 
     steps:
       - name: Check out repository
@@ -125,9 +123,13 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      - name: Configure Android virtual device storage
+        run: |
+          echo "ANDROID_AVD_HOME=$RUNNER_TEMP/android-avd" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/android-avd" build-logs
+
       - name: Create Android virtual device
         run: |
-          mkdir -p "$ANDROID_AVD_HOME" build-logs
           echo no | avdmanager create avd \
             --force \
             --name ci-api-29 \
