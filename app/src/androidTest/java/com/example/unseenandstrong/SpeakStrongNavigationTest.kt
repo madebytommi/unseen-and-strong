@@ -85,10 +85,10 @@ class SpeakStrongNavigationTest {
 
     private fun assertSpeakStrongSelected() {
         composeRule.onNode(
-            hasText("Speak Strong") and SemanticsMatcher.expectValue(
+            SemanticsMatcher.expectValue(
                 SemanticsProperties.Selected,
                 true
-            )
+            ) and hasAnyDescendant(hasText("Speak Strong"))
         ).fetchSemanticsNode()
     }
 
