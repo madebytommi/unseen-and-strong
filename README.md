@@ -48,13 +48,18 @@ Moved out of Phase 1:
 
 ## Phase 2 — Speak Strong / Advocacy
 
-Status: partially implemented, not complete.
+Status: substantially implemented, not complete.
 
 Currently implemented and accessible:
 
 - Speak Strong script hub
 - Gentle / Direct / Firm script tone switching
-- Seeded scripts for Doctor, Work, and Boundary scenarios
+- Category filtering for All, Doctor, Work, Insurance, Family, Strangers, and Boundary
+- Seeded scripts for Doctor, Work, Boundary, Insurance, Family, and Stranger scenarios
+- Text-based rehearsal with full-script and section-by-section focus modes
+- Saved before-conversation preparation with a goal, desired outcome, private notes, and follow-up planning
+- After-conversation reflection with outcome, emotional reflection, goal status, and optional follow-up date
+- User-controlled Interaction Log linking that updates an existing linked entry instead of creating duplicates
 - Boundary Builder with practice-oriented scripts
 - Accommodation request generator with copy-to-clipboard
 - Advocacy Resources screen with eligibility-style checklists and validation content
@@ -65,11 +70,10 @@ Currently implemented and accessible:
 
 Still needed before Phase 2 can be called complete:
 
-- Broader script coverage for Insurance, Family, and Strangers
-- Meaningful script rehearsal or recording
-- Structured before-and-after advocacy support
 - Local notification reminders for follow-ups
 - Fuller dedicated STD/LTD workflows
+- Audio-based rehearsal or recording, if retained in the final Phase 2 scope
+- Broader final testing and CI hardening
 
 ## Phase 3 — Medical Intelligence
 
