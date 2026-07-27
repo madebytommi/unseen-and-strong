@@ -94,6 +94,8 @@ jobs:
     needs: validation
     runs-on: ubuntu-latest
     timeout-minutes: 50
+    env:
+      ANDROID_AVD_HOME: ${{ runner.temp }}/android-avd
 
     steps:
       - name: Check out repository
@@ -125,15 +127,18 @@ jobs:
 
       - name: Create Android virtual device
         run: |
+          mkdir -p "$ANDROID_AVD_HOME" build-logs
           echo no | avdmanager create avd \
             --force \
             --name ci-api-29 \
             --package "system-images;android-29;default;x86_64" \
-            --device "pixel_2"
+            --device "pixel_2" \
+            --path "$ANDROID_AVD_HOME/ci-api-29.avd"
+          "$ANDROID_HOME/emulator/emulator" -list-avds | tee build-logs/avd-list.log
+          grep -Fxq "ci-api-29" build-logs/avd-list.log
 
       - name: Start Android virtual device
         run: |
-          mkdir -p build-logs
           if [ -e /dev/kvm ]; then
             sudo chmod 666 /dev/kvm
           fi
