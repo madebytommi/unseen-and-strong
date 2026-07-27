@@ -25,30 +25,39 @@ class SpeakStrongViewModel(
     private val _selectedTone = MutableStateFlow(Tone.GENTLE)
     val selectedTone: StateFlow<Tone> = _selectedTone.asStateFlow()
 
-    private val _selectedCategory = MutableStateFlow(CATEGORY_ALL)
+    private val _selectedCategory = MutableStateFlow(SpeakStrongCatalog.CATEGORY_ALL)
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
+    private val _selectedScript = MutableStateFlow<ScriptEntity?>(null)
+    val selectedScript: StateFlow<ScriptEntity?> = _selectedScript.asStateFlow()
+
     val scripts: StateFlow<List<ScriptEntity>> =
-        combine(_selectedTone, _selectedCategory, scriptDao.getAllScripts()) { _, category, allScripts ->
-            if (category == CATEGORY_ALL) {
-                allScripts
-            } else {
-                allScripts.filter { it.category == category }
-            }
-        }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = emptyList()
-            )
+        combine(_selectedCategory, scriptDao.getAllScripts()) { category, allScripts ->
+            SpeakStrongCatalog.filterScripts(allScripts, category)
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
     fun setTone(tone: Tone) {
         _selectedTone.value = tone
     }
 
     fun setCategory(category: String) {
-        val normalized = category.trim()
-        _selectedCategory.value = if (normalized.isBlank()) CATEGORY_ALL else normalized
+        _selectedCategory.value = if (category in SpeakStrongCatalog.categories) {
+            category
+        } else {
+            SpeakStrongCatalog.CATEGORY_ALL
+        }
+    }
+
+    fun selectScript(script: ScriptEntity) {
+        _selectedScript.value = script
+    }
+
+    fun clearSelectedScript() {
+        _selectedScript.value = null
     }
 
     class Factory(
@@ -64,13 +73,12 @@ class SpeakStrongViewModel(
     }
 
     companion object {
-        const val CATEGORY_ALL = "All"
-        const val CATEGORY_DOCTOR = "Doctor"
-        const val CATEGORY_WORK = "Work"
-        const val CATEGORY_BOUNDARY = "Boundary"
+        const val CATEGORY_ALL = SpeakStrongCatalog.CATEGORY_ALL
+        const val CATEGORY_DOCTOR = SpeakStrongCatalog.CATEGORY_DOCTOR
+        const val CATEGORY_WORK = SpeakStrongCatalog.CATEGORY_WORK
+        const val CATEGORY_INSURANCE = SpeakStrongCatalog.CATEGORY_INSURANCE
+        const val CATEGORY_FAMILY = SpeakStrongCatalog.CATEGORY_FAMILY
+        const val CATEGORY_STRANGERS = SpeakStrongCatalog.CATEGORY_STRANGERS
+        const val CATEGORY_BOUNDARY = SpeakStrongCatalog.CATEGORY_BOUNDARY
     }
 }
-
-
-
-
