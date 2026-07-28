@@ -106,7 +106,8 @@ class DisabilityClaimViewModel @JvmOverloads constructor(
 
     fun saveClaim(
         claim: DisabilityClaimEntity,
-        enableRequestLogIntegration: Boolean
+        enableRequestLogIntegration: Boolean,
+        onSaved: (() -> Unit)? = null
     ) {
         viewModelScope.launch {
             database.withTransaction {
@@ -162,6 +163,7 @@ class DisabilityClaimViewModel @JvmOverloads constructor(
                     claimDao.updateClaim(currentClaim)
                 }
             }
+            onSaved?.invoke()
         }
     }
 

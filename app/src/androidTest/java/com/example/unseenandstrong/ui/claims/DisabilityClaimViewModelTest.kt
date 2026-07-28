@@ -7,6 +7,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.unseenandstrong.data.local.UnseenDatabase
 import com.example.unseenandstrong.data.local.accommodation.AccommodationRequestEntity
 import com.example.unseenandstrong.data.local.claims.DisabilityClaimEntity
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -26,7 +28,9 @@ class DisabilityClaimViewModelTest {
     @Before
     fun setup() {
         val application = ApplicationProvider.getApplicationContext<Application>()
-        db = Room.inMemoryDatabaseBuilder(application, UnseenDatabase::class.java).build()
+        db = Room.inMemoryDatabaseBuilder(application, UnseenDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
         viewModel = DisabilityClaimViewModel(application, db.interactionDao(), db.vaultDocumentDao(), db)
     }
 
@@ -35,12 +39,20 @@ class DisabilityClaimViewModelTest {
         db.close()
     }
 
+    private fun saveClaimSync(claim: DisabilityClaimEntity, enableIntegration: Boolean) {
+        val latch = CountDownLatch(1)
+        viewModel.saveClaim(claim, enableIntegration) {
+            latch.countDown()
+        }
+        assertTrue("Save claim timed out", latch.await(5, TimeUnit.SECONDS))
+    }
+
     @Test
     fun requestLogIsNotCreatedWhenOptionIsOff() = runBlocking {
         val claim = DisabilityClaimEntity(claimType = "STD", status = "Preparing")
-        viewModel.saveClaim(claim, enableRequestLogIntegration = false)
+        saveClaimSync(claim, enableIntegration = false)
 
-        val claims = viewModel.claims.first()
+        val claims = viewModel.claims.first { it.isNotEmpty() }
         assertEquals(1, claims.size)
         assertNull(claims.first().linkedRequestId)
 
@@ -51,9 +63,9 @@ class DisabilityClaimViewModelTest {
     @Test
     fun requestLogIsCreatedOnceWhenExplicitlyEnabled() = runBlocking {
         val claim = DisabilityClaimEntity(claimType = "STD", status = "Preparing")
-        viewModel.saveClaim(claim, enableRequestLogIntegration = true)
+        saveClaimSync(claim, enableIntegration = true)
 
-        val claims = viewModel.claims.first()
+        val claims = viewModel.claims.first { it.isNotEmpty() }
         assertEquals(1, claims.size)
         val linkedId = claims.first().linkedRequestId
         assertNotNull(linkedId)
@@ -67,16 +79,16 @@ class DisabilityClaimViewModelTest {
     @Test
     fun repeatedClaimSavesUpdateTheSameRequest() = runBlocking {
         val claim = DisabilityClaimEntity(claimType = "STD", status = "Preparing")
-        viewModel.saveClaim(claim, enableRequestLogIntegration = true)
+        saveClaimSync(claim, enableIntegration = true)
 
-        val savedClaim = viewModel.claims.first().first()
+        val savedClaim = viewModel.claims.first { it.isNotEmpty() }.first()
         val linkedId = savedClaim.linkedRequestId
         assertNotNull(linkedId)
 
         val updatedClaim = savedClaim.copy(status = "Approved")
-        viewModel.saveClaim(updatedClaim, enableRequestLogIntegration = true)
+        saveClaimSync(updatedClaim, enableIntegration = true)
 
-        val claimsAfter = viewModel.claims.first()
+        val claimsAfter = viewModel.claims.first { it.first().status == "Approved" }
         assertEquals(1, claimsAfter.size)
         assertEquals(linkedId, claimsAfter.first().linkedRequestId)
 
@@ -88,9 +100,9 @@ class DisabilityClaimViewModelTest {
     @Test
     fun missingLinkedRequestIsNotSilentlyRecreated() = runBlocking {
         val claim = DisabilityClaimEntity(claimType = "STD", status = "Preparing", linkedRequestId = 999L)
-        viewModel.saveClaim(claim, enableRequestLogIntegration = true)
+        saveClaimSync(claim, enableIntegration = true)
 
-        val claimsAfter = viewModel.claims.first()
+        val claimsAfter = viewModel.claims.first { it.isNotEmpty() }
         assertEquals(1, claimsAfter.size)
         // Stale link is cleared, linkedRequestId is now null
         assertNull(claimsAfter.first().linkedRequestId)
@@ -104,21 +116,21 @@ class DisabilityClaimViewModelTest {
     fun replacementRequiresExplicitSelection() = runBlocking {
         // Step 1: Claim has a missing/stale linkedRequestId
         val claimWithStaleId = DisabilityClaimEntity(claimType = "STD", status = "Preparing", linkedRequestId = 999L)
-        viewModel.saveClaim(claimWithStaleId, enableRequestLogIntegration = true)
+        saveClaimSync(claimWithStaleId, enableIntegration = true)
 
-        var claims = viewModel.claims.first()
+        var claims = viewModel.claims.first { it.isNotEmpty() }
         val clearedClaim = claims.first()
         assertNull(clearedClaim.linkedRequestId)
 
         // Step 2: Save again with integration off -> stays unlinked, no record created
-        viewModel.saveClaim(clearedClaim, enableRequestLogIntegration = false)
-        claims = viewModel.claims.first()
+        saveClaimSync(clearedClaim, enableIntegration = false)
+        claims = viewModel.claims.first { it.isNotEmpty() }
         assertNull(claims.first().linkedRequestId)
         assertTrue(db.accommodationRequestDao().getAllRequests().first().isEmpty())
 
         // Step 3: Explicitly enable integration on the unlinked claim -> creates request
-        viewModel.saveClaim(clearedClaim, enableRequestLogIntegration = true)
-        claims = viewModel.claims.first()
+        saveClaimSync(clearedClaim, enableIntegration = true)
+        claims = viewModel.claims.first { it.first().linkedRequestId != null }
         assertNotNull(claims.first().linkedRequestId)
         assertEquals(1, db.accommodationRequestDao().getAllRequests().first().size)
     }
@@ -126,16 +138,16 @@ class DisabilityClaimViewModelTest {
     @Test
     fun requestLogChangesDoNotModifyTheClaim() = runBlocking {
         val claim = DisabilityClaimEntity(claimType = "STD", status = "Preparing")
-        viewModel.saveClaim(claim, enableRequestLogIntegration = false)
+        saveClaimSync(claim, enableIntegration = false)
 
-        val initialClaim = viewModel.claims.first().first()
+        val initialClaim = viewModel.claims.first { it.isNotEmpty() }.first()
 
         // Insert / modify request directly in accommodation request DAO
         db.accommodationRequestDao().insertRequest(
             AccommodationRequestEntity(requestType = "Ergonomic Desk", status = "Approved", notes = "Test", submissionDate = 0)
         )
 
-        val currentClaim = viewModel.claims.first().first()
+        val currentClaim = viewModel.claims.first { it.isNotEmpty() }.first()
         assertEquals(initialClaim, currentClaim)
     }
 
@@ -146,9 +158,9 @@ class DisabilityClaimViewModelTest {
         )
 
         val claim = DisabilityClaimEntity(claimType = "LTD", status = "Submitted")
-        viewModel.saveClaim(claim, enableRequestLogIntegration = true)
+        saveClaimSync(claim, enableIntegration = true)
 
-        val requests = db.accommodationRequestDao().getAllRequests().first()
+        val requests = db.accommodationRequestDao().getAllRequests().first { it.size == 2 }
         assertEquals(2, requests.size)
 
         val req1 = db.accommodationRequestDao().getRequest(req1Id.toInt())
