@@ -40,6 +40,7 @@ fun SpeakStrongScreen(
     onOpenBoundaryBuilder: () -> Unit = {},
     onOpenRequestLog: () -> Unit = {},
     onOpenBenefitsTracker: () -> Unit = {},
+    onOpenStdLtdClaims: () -> Unit = {},
     onOpenAdvocacyPlans: () -> Unit = {},
     onOpenScript: (ScriptEntity) -> Unit = {}
 ) {
@@ -70,6 +71,7 @@ fun SpeakStrongScreen(
             item { AdvocacyHubButton("Boundary Builder", onOpenBoundaryBuilder, true) }
             item { AdvocacyHubButton("Request Log", onOpenRequestLog, false) }
             item { AdvocacyHubButton("Disability Benefits Tracker", onOpenBenefitsTracker, true) }
+            item { AdvocacyHubButton("STD/LTD Claims", onOpenStdLtdClaims, true) }
             item { AdvocacyHubButton("Saved Advocacy Plans", onOpenAdvocacyPlans, false) }
 
             item {

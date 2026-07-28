@@ -167,6 +167,17 @@ class MainActivity : ComponentActivity() {
             )
         )[InsightsViewModel::class.java]
     }
+    
+    private val disabilityClaimViewModel by lazy {
+        ViewModelProvider(
+            this,
+            com.example.unseenandstrong.ui.claims.DisabilityClaimViewModel.Factory(
+                application,
+                database.interactionDao(),
+                database.vaultDocumentDao()
+            )
+        )[com.example.unseenandstrong.ui.claims.DisabilityClaimViewModel::class.java]
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -249,6 +260,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onOpenBenefitsTracker = {
                                         currentScreen = HomeScreen.BenefitsTracker
+                                    },
+                                    onOpenStdLtdClaims = {
+                                        currentScreen = HomeScreen.StdLtdClaimsList
                                     },
                                     onOpenAdvocacyPlans = {
                                         currentScreen = HomeScreen.AdvocacyPlans
@@ -406,6 +420,54 @@ class MainActivity : ComponentActivity() {
                                     viewModel = vaultViewModel,
                                     isFlareDay = isFlareDay
                                 )
+                                HomeScreen.StdLtdClaimsList -> com.example.unseenandstrong.ui.claims.StdLtdClaimsListScreen(
+                                    viewModel = disabilityClaimViewModel,
+                                    isFlareDay = isFlareDay,
+                                    onBackToHub = {
+                                        currentScreen = HomeScreen.SpeakStrong
+                                    },
+                                    onOpenClaim = { id ->
+                                        disabilityClaimViewModel.selectClaim(id)
+                                        currentScreen = HomeScreen.ClaimDetail
+                                    },
+                                    onAddClaim = {
+                                        disabilityClaimViewModel.selectClaim(null)
+                                        currentScreen = HomeScreen.ClaimForm
+                                    }
+                                )
+                                HomeScreen.ClaimDetail -> com.example.unseenandstrong.ui.claims.ClaimDetailScreen(
+                                    viewModel = disabilityClaimViewModel,
+                                    isFlareDay = isFlareDay,
+                                    onBackToClaims = {
+                                        currentScreen = HomeScreen.StdLtdClaimsList
+                                    },
+                                    onEditClaim = { id ->
+                                        disabilityClaimViewModel.selectClaim(id)
+                                        currentScreen = HomeScreen.ClaimForm
+                                    },
+                                    onLinkInteraction = {}, // Handled internally by dialog
+                                    onLinkDocument = {}, // Handled internally by dialog
+                                    onOpenInteraction = {
+                                        currentScreen = HomeScreen.Log
+                                    },
+                                    onOpenDocument = {
+                                        currentScreen = HomeScreen.Vault
+                                    }
+                                )
+                                HomeScreen.ClaimForm -> {
+                                    val claimToEdit by disabilityClaimViewModel.selectedClaim.collectAsState()
+                                    com.example.unseenandstrong.ui.claims.ClaimFormScreen(
+                                        claim = claimToEdit,
+                                        isFlareDay = isFlareDay,
+                                        onSave = { claim, enableReq ->
+                                            disabilityClaimViewModel.saveClaim(claim, enableReq)
+                                            currentScreen = HomeScreen.StdLtdClaimsList
+                                        },
+                                        onCancel = {
+                                            currentScreen = if (claimToEdit == null) HomeScreen.StdLtdClaimsList else HomeScreen.ClaimDetail
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -433,7 +495,10 @@ private enum class HomeScreen {
     RequestLog,
     BenefitsTracker,
     Log,
-    Vault;
+    Vault,
+    StdLtdClaimsList,
+    ClaimDetail,
+    ClaimForm;
 
     val label: String
         get() = when (this) {
@@ -455,6 +520,9 @@ private enum class HomeScreen {
             BenefitsTracker -> "Benefits Tracker"
             Log -> "Log"
             Vault -> "Vault"
+            StdLtdClaimsList -> "STD/LTD Claims"
+            ClaimDetail -> "Claim Details"
+            ClaimForm -> "Claim Form"
         }
 
     val icon: ImageVector
@@ -471,7 +539,10 @@ private enum class HomeScreen {
             Accommodation,
             Resource,
             BoundaryBuilder,
-            BenefitsTracker -> Icons.Default.Description
+            BenefitsTracker,
+            StdLtdClaimsList,
+            ClaimDetail,
+            ClaimForm -> Icons.Default.Description
             Vault -> Icons.Default.Folder
         }
 }
@@ -502,7 +573,10 @@ private fun BottomNavigationBar(
         HomeScreen.Resource,
         HomeScreen.BoundaryBuilder,
         HomeScreen.RequestLog,
-        HomeScreen.BenefitsTracker -> HomeScreen.SpeakStrong
+        HomeScreen.BenefitsTracker,
+        HomeScreen.StdLtdClaimsList,
+        HomeScreen.ClaimDetail,
+        HomeScreen.ClaimForm -> HomeScreen.SpeakStrong
         else -> currentScreen
     }
     val selectedIndex = topLevelScreens.indexOf(selectedScreen).coerceAtLeast(0)
