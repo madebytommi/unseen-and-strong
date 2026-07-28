@@ -28,12 +28,12 @@ enum class ClaimFilter {
     ALL, STD, LTD
 }
 
-class DisabilityClaimViewModel(
+class DisabilityClaimViewModel @JvmOverloads constructor(
     application: Application,
     private val interactionDao: InteractionDao,
-    private val vaultDocumentDao: VaultDocumentDao
+    private val vaultDocumentDao: VaultDocumentDao,
+    private val database: UnseenDatabase = UnseenDatabase.getDatabase(application)
 ) : AndroidViewModel(application) {
-    private val database = UnseenDatabase.getDatabase(application)
     private val claimDao = database.disabilityClaimDao()
     private val requestDao = database.accommodationRequestDao()
 
@@ -111,34 +111,22 @@ class DisabilityClaimViewModel(
         viewModelScope.launch {
             database.withTransaction {
                 var currentClaim = claim
-                
-                if (enableRequestLogIntegration) {
-                    val requestNotes = buildRequestNotes(currentClaim)
-                    val submissionDate = currentClaim.filedDate ?: System.currentTimeMillis()
-                    
-                    if (currentClaim.linkedRequestId != null) {
-                        val existingRequest = requestDao.getRequest(currentClaim.linkedRequestId.toInt())
-                        if (existingRequest != null) {
-                            requestDao.updateRequest(
-                                existingRequest.copy(
-                                    requestType = currentClaim.claimType,
-                                    status = currentClaim.status,
-                                    notes = requestNotes,
-                                    submissionDate = submissionDate
-                                )
-                            )
-                        } else {
-                            val newRequestId = requestDao.insertRequest(
-                                AccommodationRequestEntity(
-                                    requestType = currentClaim.claimType,
-                                    status = currentClaim.status,
-                                    notes = requestNotes,
-                                    submissionDate = submissionDate
-                                )
-                            )
-                            currentClaim = currentClaim.copy(linkedRequestId = newRequestId)
-                        }
-                    } else {
+                val linkedId = currentClaim.linkedRequestId
+                val existingRequest = linkedId?.let { requestDao.getRequest(it.toInt()) }
+                val hasLinkedId = linkedId != null
+                val linkedRequestExists = existingRequest != null
+
+                val action = ClaimRequestLogSyncPolicy.determineAction(
+                    hasLinkedId = hasLinkedId,
+                    linkedRequestExists = linkedRequestExists,
+                    enableIntegration = enableRequestLogIntegration
+                )
+
+                val requestNotes = buildRequestNotes(currentClaim)
+                val submissionDate = currentClaim.filedDate ?: System.currentTimeMillis()
+
+                when (action) {
+                    RequestLogSyncAction.CREATE -> {
                         val newRequestId = requestDao.insertRequest(
                             AccommodationRequestEntity(
                                 requestType = currentClaim.claimType,
@@ -149,15 +137,25 @@ class DisabilityClaimViewModel(
                         )
                         currentClaim = currentClaim.copy(linkedRequestId = newRequestId)
                     }
-                } else {
-                    if (currentClaim.linkedRequestId != null) {
-                        val existingRequest = requestDao.getRequest(currentClaim.linkedRequestId.toInt())
-                        if (existingRequest == null) {
-                            currentClaim = currentClaim.copy(linkedRequestId = null)
-                        }
+                    RequestLogSyncAction.UPDATE -> {
+                        checkNotNull(existingRequest)
+                        requestDao.updateRequest(
+                            existingRequest.copy(
+                                requestType = currentClaim.claimType,
+                                status = currentClaim.status,
+                                notes = requestNotes,
+                                submissionDate = submissionDate
+                            )
+                        )
+                    }
+                    RequestLogSyncAction.CLEAR_STALE_LINK -> {
+                        currentClaim = currentClaim.copy(linkedRequestId = null)
+                    }
+                    RequestLogSyncAction.NONE -> {
+                        // Keep currentClaim and request log unchanged
                     }
                 }
-                
+
                 if (currentClaim.id == 0L) {
                     claimDao.insertClaim(currentClaim)
                 } else {

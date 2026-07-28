@@ -40,7 +40,7 @@ interface DisabilityClaimDao {
     @Query("SELECT * FROM disability_claims WHERE id = :id")
     suspend fun getClaim(id: Long): DisabilityClaimEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insertClaim(claim: DisabilityClaimEntity): Long
 
     @Update
