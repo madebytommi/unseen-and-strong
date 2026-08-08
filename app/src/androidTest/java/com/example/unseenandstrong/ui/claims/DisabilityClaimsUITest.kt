@@ -1,9 +1,14 @@
 package com.example.unseenandstrong.ui.claims
 
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.unseenandstrong.MainActivity
 import org.junit.Rule
@@ -18,7 +23,15 @@ class DisabilityClaimsUITest {
 
     @Test
     fun testNavigationToClaimsAndBasicFlow() {
+        // First navigate to Speak Strong tab
+        composeTestRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+
         // From Hub, click STD/LTD Claims
+        composeTestRule.onNode(
+            hasScrollAction() and 
+            hasAnyDescendant(hasText("Choose the support that fits the conversation in front of you."))
+        ).performScrollToNode(hasText("STD/LTD Claims"))
         composeTestRule.onNodeWithText("STD/LTD Claims").performClick()
         composeTestRule.waitForIdle()
 

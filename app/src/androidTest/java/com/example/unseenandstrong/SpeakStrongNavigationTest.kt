@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import org.junit.Rule
 import org.junit.Test
@@ -19,7 +20,7 @@ class SpeakStrongNavigationTest {
 
     @Test
     fun allSpeakStrongChildDestinationsKeepSpeakStrongSelected() {
-        composeRule.onNodeWithText("Speak Strong").performClick()
+        composeRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
         composeRule.waitForIdle()
         assertSpeakStrongSelected()
 
@@ -85,11 +86,8 @@ class SpeakStrongNavigationTest {
 
     private fun assertSpeakStrongSelected() {
         composeRule.onNode(
-            SemanticsMatcher.expectValue(
-                SemanticsProperties.Selected,
-                true
-            ) and hasAnyDescendant(hasText("Speak Strong"))
-        ).fetchSemanticsNode()
+            androidx.compose.ui.test.isSelected() and androidx.compose.ui.test.hasText("Speak Strong")
+        ).assertExists()
     }
 
     private fun waitForText(text: String) {
