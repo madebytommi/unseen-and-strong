@@ -59,9 +59,9 @@ class DisabilityClaimsUITest {
         // Should be back to List Screen
         composeTestRule.onNodeWithText("Add New Claim").assertExists()
         
-        // Click the newly created claim (LTD should be visible)
-        composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("LTD"))
-        composeTestRule.onNodeWithText("LTD").performClick()
+        // Click the newly created claim (Preparing should be visible)
+        composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("Preparing"))
+        composeTestRule.onNodeWithText("Preparing").performClick()
         composeTestRule.waitForIdle()
         
         // Verify we are on Detail screen
