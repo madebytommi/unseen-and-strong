@@ -71,17 +71,11 @@ class SpeakStrongNavigationTest {
     }
 
     private fun scrollHubTo(text: String) {
-        composeRule.onNode(
-            hasScrollAction() and hasAnyDescendant(
-                hasText("Choose the support that fits the conversation in front of you.")
-            )
-        ).performScrollToNode(hasText(text))
+        composeRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText(text))
     }
 
     private fun scrollCurrentScreenTo(anchorText: String, targetText: String) {
-        composeRule.onNode(
-            hasScrollAction() and hasAnyDescendant(hasText(anchorText))
-        ).performScrollToNode(hasText(targetText))
+        composeRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText(targetText))
     }
 
     private fun assertSpeakStrongSelected() {

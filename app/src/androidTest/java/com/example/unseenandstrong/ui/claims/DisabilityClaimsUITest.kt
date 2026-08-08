@@ -52,7 +52,7 @@ class DisabilityClaimsUITest {
         composeTestRule.onNodeWithText("LTD").performClick()
         
         // Save
-        composeTestRule.onNode(hasScrollAction()).performScrollToNode(hasText("Save Claim"))
+        composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("Save Claim"))
         composeTestRule.onNodeWithText("Save Claim").performClick()
         composeTestRule.waitForIdle()
         
@@ -60,7 +60,7 @@ class DisabilityClaimsUITest {
         composeTestRule.onNodeWithText("Add New Claim").assertExists()
         
         // Click the newly created claim (LTD should be visible)
-        composeTestRule.onNode(hasScrollAction()).performScrollToNode(hasText("LTD"))
+        composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("LTD"))
         composeTestRule.onNodeWithText("LTD").performClick()
         composeTestRule.waitForIdle()
         
@@ -81,7 +81,7 @@ class DisabilityClaimsUITest {
         composeTestRule.onNodeWithText("Close").performClick()
         
         // Delete claim
-        composeTestRule.onNode(hasScrollAction()).performScrollToNode(hasText("Delete Claim"))
+        composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("Delete Claim"))
         composeTestRule.onNodeWithText("Delete Claim").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Delete").performClick()
