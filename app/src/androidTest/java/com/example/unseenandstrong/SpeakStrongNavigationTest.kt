@@ -34,7 +34,7 @@ class SpeakStrongNavigationTest {
         ).forEach { destination ->
             openHubDestination(destination)
             assertSpeakStrongSelected()
-            composeRule.onNodeWithText("Back to Speak Strong").performClick()
+            composeRule.onNodeWithText("Back to Speak Strong").performScrollTo().performClick()
             composeRule.waitForIdle()
         }
 
@@ -59,7 +59,7 @@ class SpeakStrongNavigationTest {
         waitForText("After the conversation")
         assertSpeakStrongSelected()
 
-        composeRule.onNodeWithText("Back to saved plans").performClick()
+        composeRule.onNodeWithText("Back to saved plans").performScrollTo().performClick()
         waitForText("Saved Advocacy Plans")
         assertSpeakStrongSelected()
     }

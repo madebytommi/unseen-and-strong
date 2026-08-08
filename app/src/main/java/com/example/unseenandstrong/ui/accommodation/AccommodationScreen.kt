@@ -92,7 +92,7 @@ fun AccommodationScreen(
                         contentColor = textColor
                     )
                 ) {
-                    Text(text = "Back")
+                    Text(text = "Back to Speak Strong")
                 }
 
                 Text(

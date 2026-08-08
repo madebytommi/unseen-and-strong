@@ -52,14 +52,14 @@ class DisabilityClaimsUITest {
         composeTestRule.onNodeWithText("LTD").performClick()
         
         // Save
-        composeTestRule.onNodeWithText("Save Claim").performClick()
+        composeTestRule.onNodeWithText("Save Claim").performScrollTo().performClick()
         composeTestRule.waitForIdle()
         
         // Should be back to List Screen
         composeTestRule.onNodeWithText("Add New Claim").assertExists()
         
         // Click the newly created claim (LTD should be visible)
-        composeTestRule.onNodeWithText("LTD").performClick()
+        composeTestRule.onNodeWithText("LTD").performScrollTo().performClick()
         composeTestRule.waitForIdle()
         
         // Verify we are on Detail screen
@@ -79,7 +79,7 @@ class DisabilityClaimsUITest {
         composeTestRule.onNodeWithText("Close").performClick()
         
         // Delete claim
-        composeTestRule.onNodeWithText("Delete Claim").performClick()
+        composeTestRule.onNodeWithText("Delete Claim").performScrollTo().performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Delete").performClick()
         composeTestRule.waitForIdle()
