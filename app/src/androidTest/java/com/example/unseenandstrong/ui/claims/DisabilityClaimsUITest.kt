@@ -19,6 +19,10 @@ class DisabilityClaimsUITest {
     @Test
     fun testNavigationToClaimsAndBasicFlow() {
         // From Hub, click STD/LTD Claims
+        composeTestRule.onNode(
+            androidx.compose.ui.test.hasScrollAction() and 
+            androidx.compose.ui.test.hasAnyDescendant(androidx.compose.ui.test.hasText("Choose the support that fits the conversation in front of you."))
+        ).performScrollToNode(androidx.compose.ui.test.hasText("STD/LTD Claims"))
         composeTestRule.onNodeWithText("STD/LTD Claims").performClick()
         composeTestRule.waitForIdle()
 

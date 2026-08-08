@@ -85,11 +85,8 @@ class SpeakStrongNavigationTest {
 
     private fun assertSpeakStrongSelected() {
         composeRule.onNode(
-            SemanticsMatcher.expectValue(
-                SemanticsProperties.Selected,
-                true
-            ) and hasAnyDescendant(hasText("Speak Strong"))
-        ).fetchSemanticsNode()
+            androidx.compose.ui.test.isSelected() and androidx.compose.ui.test.hasText("Speak Strong")
+        ).assertExists()
     }
 
     private fun waitForText(text: String) {
