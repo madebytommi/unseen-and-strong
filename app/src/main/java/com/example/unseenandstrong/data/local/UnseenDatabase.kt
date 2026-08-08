@@ -109,7 +109,6 @@ abstract class UnseenDatabase : RoomDatabase() {
                         MIGRATION_13_14
                     )
                     .addCallback(SEED_SCRIPTS_CALLBACK)
-                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance
