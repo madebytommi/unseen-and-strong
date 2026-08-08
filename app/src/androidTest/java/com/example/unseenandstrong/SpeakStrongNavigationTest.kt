@@ -19,7 +19,7 @@ class SpeakStrongNavigationTest {
 
     @Test
     fun allSpeakStrongChildDestinationsKeepSpeakStrongSelected() {
-        composeRule.onNodeWithText("Speak Strong").performClick()
+        composeRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
         composeRule.waitForIdle()
         assertSpeakStrongSelected()
 

@@ -22,6 +22,10 @@ class DisabilityClaimsUITest {
 
     @Test
     fun testNavigationToClaimsAndBasicFlow() {
+        // First navigate to Speak Strong tab
+        composeTestRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+
         // From Hub, click STD/LTD Claims
         composeTestRule.onNode(
             hasScrollAction() and 
