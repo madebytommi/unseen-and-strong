@@ -4,6 +4,12 @@ An Android app built with Jetpack Compose to support people living with chronic,
 
 Unseen and Strong is intentionally low-pressure: no streak shame, no punitive reminders, and no productivity-first health tracking. The app is designed to help users notice patterns, preserve energy, self-advocate, and find comfort when symptoms are hard to explain or invisible to others.
 
+## Project documentation
+
+- [Product Vision](docs/PRODUCT_VISION.md) — why Unseen & Strong exists and the principles that guide product decisions.
+- [Build Phases](docs/BUILD_PHASES.md) — the living roadmap, current implementation status, and v1 scope.
+- [Design System](docs/DESIGN_SYSTEM.md) — the visual language, accessibility guidance, Flare Day behavior, and emotional design rules.
+
 ## Current status
 
 Phase 1 is the completed revised MVP baseline. Phase 2 advocacy tools are substantially implemented but not complete. Early Phase 3 work has begun with medication and cycle tracking.
@@ -94,7 +100,7 @@ Still planned:
 - Deeper and safer pattern insights
 - Additional medical-intelligence workflows defined for Phase 3
 
-Phase 4+ features such as shop integration, physical care boxes, community support, cloud sync, and advanced AI insights are intentionally outside the current MVP.
+Phase 4+ features such as shop integration, physical care boxes, community support, cloud sync, and advanced AI insights are intentionally outside the current v1 scope.
 
 ## Tech stack
 
