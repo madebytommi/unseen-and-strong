@@ -22,6 +22,7 @@ This file controls repository implementation conventions. If it conflicts with a
 - `app/src/main/java/com/example/unseenandstrong/MainActivity.kt` is the main activity and currently coordinates app-level state and navigation across multiple Phase 1–3 screens.
 - Feature UI and related view models are organized in substantial packages under `app/src/main/java/com/example/unseenandstrong/ui/`.
 - Room entities, DAOs, migrations, and the database live under `app/src/main/java/com/example/unseenandstrong/data/local/`.
+- Default-off local advocacy reminders live under `app/src/main/java/com/example/unseenandstrong/reminder/` and use deterministic unique WorkManager names; save, clear, and delete flows must keep their matching work synchronized.
 - Compose theme composition, color tokens, and typography are centralized under `app/src/main/java/com/example/unseenandstrong/ui/theme/`.
 - App metadata and the activity declaration live in `app/src/main/AndroidManifest.xml`.
 

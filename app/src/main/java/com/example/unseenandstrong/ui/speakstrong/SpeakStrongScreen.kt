@@ -3,6 +3,7 @@ package com.example.unseenandstrong.ui.speakstrong
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,11 +18,15 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.script.ScriptEntity
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
@@ -35,6 +40,11 @@ import com.example.unseenandstrong.ui.theme.SoftCloudGrey
 fun SpeakStrongScreen(
     viewModel: SpeakStrongViewModel,
     isFlareDay: Boolean = false,
+    followUpRemindersEnabled: Boolean = false,
+    followUpReminderMessage: String? = null,
+    showNotificationSettingsAction: Boolean = false,
+    onFollowUpRemindersChanged: (Boolean) -> Unit = {},
+    onOpenNotificationSettings: () -> Unit = {},
     onDraftAdaRequest: () -> Unit = {},
     onOpenResources: () -> Unit = {},
     onOpenBoundaryBuilder: () -> Unit = {},
@@ -65,6 +75,69 @@ fun SpeakStrongScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     color = textColor
                 )
+            }
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isFlareDay) {
+                            NightLavender.copy(alpha = 0.82f)
+                        } else {
+                            PaleCloudWhite
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Follow-up reminders",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = textColor,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Switch(
+                                checked = followUpRemindersEnabled,
+                                onCheckedChange = onFollowUpRemindersChanged,
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = SoftBlushPink,
+                                    checkedTrackColor = LavenderPurple,
+                                    uncheckedThumbColor = SoftBlushPink,
+                                    uncheckedTrackColor = DeepFogGrey.copy(alpha = 0.35f)
+                                )
+                            )
+                        }
+                        Text(
+                            "Get a gentle local notification for advocacy follow-ups and deadlines you’re tracking.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = textColor
+                        )
+                        followUpReminderMessage?.let { message ->
+                            Text(
+                                message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = textColor
+                            )
+                        }
+                        if (showNotificationSettingsAction) {
+                            TextButton(
+                                onClick = onOpenNotificationSettings,
+                                modifier = Modifier.align(Alignment.End)
+                            ) {
+                                Text(
+                                    "Open notification settings",
+                                    color = if (isFlareDay) SoftBlushPink else LavenderPurple
+                                )
+                            }
+                        }
+                    }
+                }
             }
             item { AdvocacyHubButton("Draft ADA Request", onDraftAdaRequest, true) }
             item { AdvocacyHubButton("Advocacy Resources", onOpenResources, false) }

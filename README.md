@@ -74,10 +74,10 @@ Currently implemented and accessible:
 - Request Log for FMLA, ADA, and disability requests
 - Disability Benefits Tracker with persisted stages, statuses, notes, completed dates, deadlines, and approaching-deadline support
 - Dedicated STD/LTD claim workflows with checklists and Interaction/Document linking
+- Default-off local notifications for advocacy follow-ups, benefits deadlines, and STD/LTD claim dates
 
 Still needed before Phase 2 can be called complete:
 
-- Local notification reminders for follow-ups
 - Audio-based rehearsal or recording, if retained in the final Phase 2 scope
 - Broader final testing and CI hardening
 

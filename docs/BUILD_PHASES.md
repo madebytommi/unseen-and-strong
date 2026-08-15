@@ -252,10 +252,7 @@ The vault remains local-first.
 - ✅ Follow-up dates can be recorded
 - ✅ Deadlines can be tracked
 - ✅ Approaching-deadline information exists in parts of the advocacy system
-
-### Remaining
-
-- ⚪ Local notification reminders
+- ✅ User-controlled local notifications can be enabled for advocacy follow-ups and deadlines
 
 Notifications should remain:
 
@@ -295,7 +292,7 @@ Notifications should remain:
 
 Before Phase 2 is called fully complete:
 
-- [ ] Add user-controlled local follow-up notifications
+- [x] Add user-controlled local follow-up notifications
 - [ ] Decide whether audio rehearsal belongs in final Phase 2 scope
 - [ ] Complete broader UI and workflow testing
 - [ ] Continue CI hardening
@@ -712,7 +709,7 @@ For the first strong public v1, the recommended boundary is:
 
 Complete the remaining release-quality work:
 
-- [ ] Local follow-up notifications
+- [x] Local follow-up notifications
 - [ ] Final decision on audio rehearsal
 - [ ] Final testing
 - [ ] CI hardening

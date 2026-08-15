@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.unseenandstrong.data.local.interaction.InteractionDao
 import com.example.unseenandstrong.data.local.interaction.InteractionEntity
+import com.example.unseenandstrong.reminder.FollowUpReminderCoordinator
+import com.example.unseenandstrong.reminder.NoOpFollowUpReminderCoordinator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +16,8 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class InteractionViewModel(
-    private val interactionDao: InteractionDao
+    private val interactionDao: InteractionDao,
+    private val reminderCoordinator: FollowUpReminderCoordinator = NoOpFollowUpReminderCoordinator
 ) : ViewModel() {
 
     private val validationMessages = listOf(
@@ -55,17 +58,17 @@ class InteractionViewModel(
         if (trimmedCategory.isBlank() || trimmedPersonName.isBlank()) return
 
         viewModelScope.launch {
-            interactionDao.insertInteraction(
-                InteractionEntity(
-                    timestamp = System.currentTimeMillis(),
-                    needsFollowUp = needsFollowUp,
-                    followUpDate = followUpDate,
-                    category = trimmedCategory,
-                    personName = trimmedPersonName,
-                    organization = trimmedOrganization,
-                    notes = trimmedNotes
-                )
+            val interaction = InteractionEntity(
+                timestamp = System.currentTimeMillis(),
+                needsFollowUp = needsFollowUp,
+                followUpDate = followUpDate,
+                category = trimmedCategory,
+                personName = trimmedPersonName,
+                organization = trimmedOrganization,
+                notes = trimmedNotes
             )
+            val id = interactionDao.insertInteraction(interaction)
+            reminderCoordinator.syncInteractionFollowUp(interaction.copy(id = id))
 
             _currentValidationMessage.value =
                 validationMessages[Random.nextInt(validationMessages.size)]
@@ -81,19 +84,20 @@ class InteractionViewModel(
     fun deleteInteraction(interaction: InteractionEntity) {
         viewModelScope.launch {
             interactionDao.deleteInteraction(interaction)
+            reminderCoordinator.cancelInteractionFollowUp(interaction.id)
         }
     }
 
     class Factory(
-        private val interactionDao: InteractionDao
+        private val interactionDao: InteractionDao,
+        private val reminderCoordinator: FollowUpReminderCoordinator = NoOpFollowUpReminderCoordinator
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(InteractionViewModel::class.java)) {
-                return InteractionViewModel(interactionDao) as T
+                return InteractionViewModel(interactionDao, reminderCoordinator) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }
 }
-

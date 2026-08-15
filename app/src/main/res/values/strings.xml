@@ -1,5 +1,12 @@
 <resources>
     <string name="app_name">Unseen &amp; Strong</string>
+    <string name="follow_up_notification_channel_name">Follow-up reminders</string>
+    <string name="follow_up_notification_channel_description">Gentle local reminders for advocacy follow-ups and deadlines</string>
+    <string name="follow_up_notification_advocacy">A gentle follow-up reminder for something you wanted to revisit today.</string>
+    <string name="follow_up_notification_interaction">There’s an advocacy item you wanted to revisit today.</string>
+    <string name="follow_up_notification_benefits">A benefits deadline you’re tracking is here today.</string>
+    <string name="follow_up_notification_claim_next_action">There’s a claim next step you wanted to revisit today.</string>
+    <string name="follow_up_notification_claim_appeal">A claim deadline you’re tracking is here today.</string>
     <string-array name="gentle_reminders">
         <item>You are safe. This will pass.</item>
         <item>Your feelings are valid.</item>

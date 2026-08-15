@@ -603,7 +603,8 @@ private enum class FollowUpOption(val label: String, private val amount: Long, p
     fun toEpochMillis(): Long {
         return LocalDate.now()
             .plus(amount, unit)
-            .atStartOfDay(ZoneId.systemDefault())
+            .atTime(12, 0)
+            .atZone(ZoneId.systemDefault())
             .toInstant()
             .toEpochMilli()
     }
@@ -641,5 +642,4 @@ private fun formatMonthYear(timestamp: Long): String {
         .toLocalDate()
         .format(formatter)
 }
-
 

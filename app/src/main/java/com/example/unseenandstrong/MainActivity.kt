@@ -1,6 +1,11 @@
 package com.example.unseenandstrong
 
+import android.Manifest
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -39,7 +44,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.unseenandstrong.data.local.UnseenDatabase
+import com.example.unseenandstrong.reminder.FollowUpNotificationSupport
+import com.example.unseenandstrong.reminder.FollowUpReminderPreferences
+import com.example.unseenandstrong.reminder.LocalFollowUpReminderCoordinator
 import com.example.unseenandstrong.ui.accommodation.AccommodationScreen
 import com.example.unseenandstrong.ui.accommodation.AccommodationViewModel
 import com.example.unseenandstrong.ui.accommodation.RequestLogScreen
@@ -79,9 +88,34 @@ import com.example.unseenandstrong.ui.theme.SoftCloudGrey
 import com.example.unseenandstrong.ui.theme.UnseenAndStrongTheme
 import com.example.unseenandstrong.ui.vault.VaultScreen
 import com.example.unseenandstrong.ui.vault.VaultViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val database by lazy { UnseenDatabase.getDatabase(applicationContext) }
+    private val followUpReminderPreferences by lazy {
+        FollowUpReminderPreferences(applicationContext)
+    }
+    private val followUpReminderCoordinator by lazy {
+        LocalFollowUpReminderCoordinator(applicationContext)
+    }
+    private var followUpRemindersEnabled by mutableStateOf(false)
+    private var followUpReminderMessage by mutableStateOf<String?>(null)
+    private var showNotificationSettingsAction by mutableStateOf(false)
+    private var notificationPermissionRequestInFlight = false
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        notificationPermissionRequestInFlight = false
+        if (granted) {
+            enableFollowUpReminders()
+        } else {
+            disableFollowUpReminders(
+                message = "Follow-up reminders are still off. You can allow notifications in Android settings whenever you’re ready.",
+                showSettingsAction = true
+            )
+        }
+    }
     private val appViewModel by lazy { ViewModelProvider(this)[AppViewModel::class.java] }
     private val checkInViewModel by lazy {
         ViewModelProvider(
@@ -110,7 +144,7 @@ class MainActivity : ComponentActivity() {
     private val advocacySupportViewModel by lazy {
         ViewModelProvider(
             this,
-            AdvocacySupportViewModel.Factory(database)
+            AdvocacySupportViewModel.Factory(database, followUpReminderCoordinator)
         )[AdvocacySupportViewModel::class.java]
     }
     private val accommodationViewModel by lazy {
@@ -120,7 +154,10 @@ class MainActivity : ComponentActivity() {
         ViewModelProvider(this)[RequestLogViewModel::class.java]
     }
     private val benefitsTrackerViewModel by lazy {
-        ViewModelProvider(this)[BenefitsTrackerViewModel::class.java]
+        ViewModelProvider(
+            this,
+            BenefitsTrackerViewModel.Factory(application, followUpReminderCoordinator)
+        )[BenefitsTrackerViewModel::class.java]
     }
     private val resourceViewModel by lazy {
         ViewModelProvider(this)[ResourceViewModel::class.java]
@@ -128,7 +165,10 @@ class MainActivity : ComponentActivity() {
     private val interactionViewModel by lazy {
         ViewModelProvider(
             this,
-            InteractionViewModel.Factory(database.interactionDao())
+            InteractionViewModel.Factory(
+                database.interactionDao(),
+                followUpReminderCoordinator
+            )
         )[InteractionViewModel::class.java]
     }
     private val vaultViewModel by lazy {
@@ -174,13 +214,15 @@ class MainActivity : ComponentActivity() {
             com.example.unseenandstrong.ui.claims.DisabilityClaimViewModel.Factory(
                 application,
                 database.interactionDao(),
-                database.vaultDocumentDao()
+                database.vaultDocumentDao(),
+                followUpReminderCoordinator
             )
         )[com.example.unseenandstrong.ui.claims.DisabilityClaimViewModel::class.java]
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        restoreFollowUpReminderState()
         enableEdgeToEdge()
         setContent {
             var currentScreen by rememberSaveable { mutableStateOf(HomeScreen.CheckIn) }
@@ -246,6 +288,11 @@ class MainActivity : ComponentActivity() {
                                 HomeScreen.SpeakStrong -> SpeakStrongScreen(
                                     viewModel = speakStrongViewModel,
                                     isFlareDay = isFlareDay,
+                                    followUpRemindersEnabled = followUpRemindersEnabled,
+                                    followUpReminderMessage = followUpReminderMessage,
+                                    showNotificationSettingsAction = showNotificationSettingsAction,
+                                    onFollowUpRemindersChanged = ::handleFollowUpReminderToggle,
+                                    onOpenNotificationSettings = ::openNotificationSettings,
                                     onDraftAdaRequest = {
                                         currentScreen = HomeScreen.Accommodation
                                     },
@@ -474,6 +521,92 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (
+            !notificationPermissionRequestInFlight &&
+            followUpReminderPreferences.remindersEnabled &&
+            !FollowUpNotificationSupport.canPostNotifications(this)
+        ) {
+            disableFollowUpReminders(
+                message = "Follow-up reminders are off because notifications are not currently allowed.",
+                showSettingsAction = true
+            )
+        }
+    }
+
+    private fun restoreFollowUpReminderState() {
+        followUpRemindersEnabled = followUpReminderPreferences.remindersEnabled
+        if (!followUpRemindersEnabled) return
+
+        FollowUpNotificationSupport.createChannel(this)
+        if (FollowUpNotificationSupport.canPostNotifications(this)) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                followUpReminderCoordinator.reconcileAll(database)
+            }
+        } else {
+            disableFollowUpReminders(
+                message = "Follow-up reminders are off because notifications are not currently allowed.",
+                showSettingsAction = true
+            )
+        }
+    }
+
+    private fun handleFollowUpReminderToggle(enabled: Boolean) {
+        if (!enabled) {
+            disableFollowUpReminders()
+            return
+        }
+
+        FollowUpNotificationSupport.createChannel(this)
+        when {
+            FollowUpNotificationSupport.canPostNotifications(this) -> {
+                enableFollowUpReminders()
+            }
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                !FollowUpNotificationSupport.hasRuntimePermission(this) &&
+                !followUpReminderPreferences.notificationPermissionRequested -> {
+                followUpReminderPreferences.notificationPermissionRequested = true
+                notificationPermissionRequestInFlight = true
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            else -> {
+                disableFollowUpReminders(
+                    message = "Follow-up reminders are still off. You can allow notifications in Android settings whenever you’re ready.",
+                    showSettingsAction = true
+                )
+            }
+        }
+    }
+
+    private fun enableFollowUpReminders() {
+        followUpReminderCoordinator.setRemindersEnabled(true)
+        followUpRemindersEnabled = true
+        followUpReminderMessage = "Follow-up reminders are on."
+        showNotificationSettingsAction = false
+        lifecycleScope.launch(Dispatchers.IO) {
+            followUpReminderCoordinator.reconcileAll(database)
+        }
+    }
+
+    private fun disableFollowUpReminders(
+        message: String? = null,
+        showSettingsAction: Boolean = false
+    ) {
+        followUpReminderCoordinator.setRemindersEnabled(false)
+        followUpRemindersEnabled = false
+        followUpReminderMessage = message
+        showNotificationSettingsAction = showSettingsAction
+    }
+
+    private fun openNotificationSettings() {
+        startActivity(
+            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            }
+        )
     }
 }
 

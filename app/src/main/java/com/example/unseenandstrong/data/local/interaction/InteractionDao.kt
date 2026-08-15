@@ -25,4 +25,7 @@ interface InteractionDao {
 
     @Query("SELECT * FROM interactions ORDER BY timestamp DESC")
     fun getAllInteractions(): Flow<List<InteractionEntity>>
+
+    @Query("SELECT * FROM interactions")
+    suspend fun getAllInteractionsOnce(): List<InteractionEntity>
 }

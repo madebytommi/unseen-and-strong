@@ -16,5 +16,7 @@ interface BenefitsStageDao {
 
     @Query("SELECT COUNT(*) FROM benefits_stages")
     suspend fun getStageCount(): Int
-}
 
+    @Query("SELECT * FROM benefits_stages")
+    suspend fun getAllStagesOnce(): List<BenefitsStageEntity>
+}

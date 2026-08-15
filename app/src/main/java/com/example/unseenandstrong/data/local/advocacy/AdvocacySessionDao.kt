@@ -23,4 +23,7 @@ interface AdvocacySessionDao {
 
     @Query("SELECT * FROM advocacy_sessions WHERE id = :id LIMIT 1")
     suspend fun getSessionById(id: Long): AdvocacySessionEntity?
+
+    @Query("SELECT * FROM advocacy_sessions")
+    suspend fun getAllSessions(): List<AdvocacySessionEntity>
 }

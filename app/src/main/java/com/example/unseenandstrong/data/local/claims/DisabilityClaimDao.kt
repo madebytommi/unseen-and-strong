@@ -40,6 +40,9 @@ interface DisabilityClaimDao {
     @Query("SELECT * FROM disability_claims WHERE id = :id")
     suspend fun getClaim(id: Long): DisabilityClaimEntity?
 
+    @Query("SELECT * FROM disability_claims")
+    suspend fun getAllClaims(): List<DisabilityClaimEntity>
+
     @Insert
     suspend fun insertClaim(claim: DisabilityClaimEntity): Long
 

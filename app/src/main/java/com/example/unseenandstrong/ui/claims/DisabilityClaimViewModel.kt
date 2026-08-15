@@ -15,6 +15,8 @@ import com.example.unseenandstrong.data.local.vault.VaultDocumentEntity
 import androidx.lifecycle.ViewModelProvider
 import com.example.unseenandstrong.data.local.interaction.InteractionDao
 import com.example.unseenandstrong.data.local.vault.VaultDocumentDao
+import com.example.unseenandstrong.reminder.FollowUpReminderCoordinator
+import com.example.unseenandstrong.reminder.NoOpFollowUpReminderCoordinator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +34,8 @@ class DisabilityClaimViewModel @JvmOverloads constructor(
     application: Application,
     private val interactionDao: InteractionDao,
     private val vaultDocumentDao: VaultDocumentDao,
-    private val database: UnseenDatabase = UnseenDatabase.getDatabase(application)
+    private val database: UnseenDatabase = UnseenDatabase.getDatabase(application),
+    private val reminderCoordinator: FollowUpReminderCoordinator = NoOpFollowUpReminderCoordinator
 ) : AndroidViewModel(application) {
     private val claimDao = database.disabilityClaimDao()
     private val requestDao = database.accommodationRequestDao()
@@ -110,7 +113,7 @@ class DisabilityClaimViewModel @JvmOverloads constructor(
         onSaved: (() -> Unit)? = null
     ) {
         viewModelScope.launch {
-            database.withTransaction {
+            val savedClaim = database.withTransaction {
                 var currentClaim = claim
                 val linkedId = currentClaim.linkedRequestId
                 val existingRequest = linkedId?.let { requestDao.getRequest(it.toInt()) }
@@ -158,11 +161,14 @@ class DisabilityClaimViewModel @JvmOverloads constructor(
                 }
 
                 if (currentClaim.id == 0L) {
-                    claimDao.insertClaim(currentClaim)
+                    val id = claimDao.insertClaim(currentClaim)
+                    currentClaim = currentClaim.copy(id = id)
                 } else {
                     claimDao.updateClaim(currentClaim)
                 }
+                currentClaim
             }
+            reminderCoordinator.syncClaimReminders(savedClaim)
             onSaved?.invoke()
         }
     }
@@ -183,6 +189,7 @@ class DisabilityClaimViewModel @JvmOverloads constructor(
                 claimDao.clearDocumentLinksForClaim(claim.id)
                 claimDao.deleteClaim(claim)
             }
+            reminderCoordinator.cancelClaimReminders(claim.id)
             onDeleted()
         }
     }
@@ -258,12 +265,18 @@ class DisabilityClaimViewModel @JvmOverloads constructor(
     class Factory(
         private val application: Application,
         private val interactionDao: InteractionDao,
-        private val vaultDocumentDao: VaultDocumentDao
+        private val vaultDocumentDao: VaultDocumentDao,
+        private val reminderCoordinator: FollowUpReminderCoordinator = NoOpFollowUpReminderCoordinator
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(DisabilityClaimViewModel::class.java)) {
-                return DisabilityClaimViewModel(application, interactionDao, vaultDocumentDao) as T
+                return DisabilityClaimViewModel(
+                    application,
+                    interactionDao,
+                    vaultDocumentDao,
+                    reminderCoordinator = reminderCoordinator
+                ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

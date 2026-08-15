@@ -8,6 +8,8 @@ import com.example.unseenandstrong.data.local.UnseenDatabase
 import com.example.unseenandstrong.data.local.advocacy.AdvocacySessionEntity
 import com.example.unseenandstrong.data.local.interaction.InteractionEntity
 import com.example.unseenandstrong.data.local.script.ScriptEntity
+import com.example.unseenandstrong.reminder.FollowUpReminderCoordinator
+import com.example.unseenandstrong.reminder.NoOpFollowUpReminderCoordinator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,7 +42,8 @@ data class AdvocacyReflectionInput(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AdvocacySupportViewModel(
-    private val database: UnseenDatabase
+    private val database: UnseenDatabase,
+    private val reminderCoordinator: FollowUpReminderCoordinator = NoOpFollowUpReminderCoordinator
 ) : ViewModel() {
     private val sessionDao = database.advocacySessionDao()
     private val interactionDao = database.interactionDao()
@@ -122,7 +125,7 @@ class AdvocacySupportViewModel(
         onSaved: () -> Unit
     ) {
         viewModelScope.launch {
-            database.withTransaction {
+            val updatedSession = database.withTransaction {
                 val now = System.currentTimeMillis()
                 val normalizedFollowUpDate = if (input.needsFollowUp) input.followUpDate else null
                 val exportAction = AdvocacyExportPolicy.decide(
@@ -161,21 +164,24 @@ class AdvocacySupportViewModel(
                     }
                 }
 
-                sessionDao.updateSession(
-                    session.copy(
-                        conversationHappened = input.conversationHappened,
-                        outcomeSummary = input.outcomeSummary.trim(),
-                        emotionalReflection = input.emotionalReflection.trim(),
-                        goalResult = input.goalResult,
-                        needsFollowUp = input.needsFollowUp,
-                        followUpDate = normalizedFollowUpDate,
-                        reflectionNote = input.reflectionNote.trim(),
-                        reflectionComplete = input.reflectionComplete,
-                        updatedAt = now,
-                        linkedInteractionId = linkedInteractionId
-                    )
+                val updated = session.copy(
+                    conversationHappened = input.conversationHappened,
+                    outcomeSummary = input.outcomeSummary.trim(),
+                    emotionalReflection = input.emotionalReflection.trim(),
+                    goalResult = input.goalResult,
+                    needsFollowUp = input.needsFollowUp,
+                    followUpDate = normalizedFollowUpDate,
+                    reflectionNote = input.reflectionNote.trim(),
+                    reflectionComplete = input.reflectionComplete,
+                    updatedAt = now,
+                    linkedInteractionId = linkedInteractionId
                 )
+                sessionDao.updateSession(updated)
+                updated
             }
+            setOfNotNull(session.linkedInteractionId, updatedSession.linkedInteractionId)
+                .forEach(reminderCoordinator::cancelInteractionFollowUp)
+            reminderCoordinator.syncAdvocacyFollowUp(updatedSession)
             onSaved()
         }
     }
@@ -210,12 +216,13 @@ class AdvocacySupportViewModel(
     }
 
     class Factory(
-        private val database: UnseenDatabase
+        private val database: UnseenDatabase,
+        private val reminderCoordinator: FollowUpReminderCoordinator = NoOpFollowUpReminderCoordinator
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AdvocacySupportViewModel::class.java)) {
-                return AdvocacySupportViewModel(database) as T
+                return AdvocacySupportViewModel(database, reminderCoordinator) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
