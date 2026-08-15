@@ -38,7 +38,7 @@ This file controls repository implementation conventions. If it conflicts with a
 
 - Dependencies and most plugin versions are managed in `gradle/libs.versions.toml`; prefer catalog entries instead of adding hard-coded versions.
 - Gradle scripts use Kotlin DSL (`build.gradle.kts`), with project repos locked via `RepositoriesMode.FAIL_ON_PROJECT_REPOS` in `settings.gradle.kts`.
-- `namespace` and `applicationId` are `com.example.unseenandstrong`; the current app configuration uses `minSdk = 29`, `targetSdk = 35`, `compileSdk = 35`, and Java 11 compatibility.
+- `namespace` is `com.example.unseenandstrong`, while `applicationId` is `com.madebytommi.unseenandstrong`; the current app configuration uses `minSdk = 29`, `targetSdk = 35`, `compileSdk = 35`, and Java 11 compatibility.
 - Prefer existing Compose, state, view-model, DAO, and Room migration patterns over parallel abstractions.
 - Inspect nearby code and current repository state before editing; preserve unrelated work in a dirty worktree.
 

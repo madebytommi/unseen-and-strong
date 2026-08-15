@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Unseen and Strong</string>
+    <string name="app_name">Unseen &amp; Strong</string>
     <string-array name="gentle_reminders">
         <item>You are safe. This will pass.</item>
         <item>Your feelings are valid.</item>

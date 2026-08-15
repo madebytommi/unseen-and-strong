@@ -9,7 +9,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.unseenandstrong"
+        applicationId = "com.madebytommi.unseenandstrong"
         minSdk = 29
         targetSdk = 35
         versionCode = 1
