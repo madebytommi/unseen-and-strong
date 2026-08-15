@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.advocacy.AdvocacySessionEntity
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
@@ -94,7 +95,7 @@ fun AdvocacyPlansScreen(
                             Text(
                                 "${session.scriptCategory} • ${session.selectedTone.lowercase().replaceFirstChar { it.uppercase() }}",
                                 style = MaterialTheme.typography.labelLarge,
-                                color = if (isFlareDay) SoftBlushPink else LavenderPurple
+                                color = if (isFlareDay) SoftBlushPink else DustyMauve
                             )
                             val target = listOf(session.personName, session.organization)
                                 .filter { it.isNotBlank() }
@@ -102,14 +103,16 @@ fun AdvocacyPlansScreen(
                             if (target.isNotBlank()) {
                                 Text(target, style = MaterialTheme.typography.bodyMedium, color = textColor)
                             }
-                            Text(
-                                "Updated ${formatAdvocacyDate(session.updatedAt)}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = textColor.copy(alpha = 0.75f)
-                            )
+                            if (!isFlareDay) {
+                                Text(
+                                    "Updated ${formatAdvocacyDate(session.updatedAt)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = textColor.copy(alpha = 0.75f)
+                                )
+                            }
                             if (session.reflectionComplete) {
                                 Text(
-                                    "Reflection marked complete",
+                                    "✓ Reflection marked complete",
                                     style = MaterialTheme.typography.labelLarge,
                                     color = if (isFlareDay) SoftBlushPink else LavenderPurple
                                 )
@@ -119,7 +122,7 @@ fun AdvocacyPlansScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = SoftBlushPink,
-                                    contentColor = DeepFogGrey
+                                    contentColor = NightLavender
                                 )
                             ) { Text("Review preparation") }
                             Button(
@@ -127,7 +130,7 @@ fun AdvocacyPlansScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = LavenderPurple,
-                                    contentColor = PaleCloudWhite
+                                    contentColor = NightLavender
                                 )
                             ) {
                                 Text(if (session.reflectionComplete) "Edit reflection" else "Add reflection")
@@ -159,7 +162,7 @@ fun AdvocacySelectionFallback(
                 onClick = onBackToHub,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = LavenderPurple,
-                    contentColor = PaleCloudWhite
+                    contentColor = NightLavender
                 )
             ) { Text("Back to Speak Strong") }
         }

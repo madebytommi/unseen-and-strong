@@ -1,10 +1,7 @@
 package com.example.unseenandstrong.ui.theme
 
-import android.app.Activity
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -14,27 +11,33 @@ import androidx.compose.ui.platform.LocalContext
 private val FlareDayColorScheme = lightColorScheme(
     primary = LavenderPurple,
     secondary = SoftBlushPink,
-    tertiary = SoftBlushPink,
+    tertiary = DustyMauve,
     background = NightLavender,
     surface = NightLavender,
-    onPrimary = PaleCloudWhite,
-    onSecondary = PaleCloudWhite,
+    surfaceVariant = NightLavender,
+    onPrimary = NightLavender,
+    onSecondary = NightLavender,
     onTertiary = PaleCloudWhite,
     onBackground = PaleCloudWhite,
-    onSurface = PaleCloudWhite
+    onSurface = PaleCloudWhite,
+    onSurfaceVariant = PaleCloudWhite,
+    outline = WarmMistGrey
 )
 
 private val NormalColorScheme = lightColorScheme(
     primary = SoftBlushPink,
     secondary = LavenderPurple,
-    tertiary = LavenderPurple,
+    tertiary = DustyMauve,
     background = SoftCloudGrey,
     surface = SoftCloudGrey,
-    onPrimary = DeepFogGrey,
-    onSecondary = DeepFogGrey,
-    onTertiary = DeepFogGrey,
+    surfaceVariant = PaleCloudWhite,
+    onPrimary = NightLavender,
+    onSecondary = NightLavender,
+    onTertiary = PaleCloudWhite,
     onBackground = DeepFogGrey,
-    onSurface = DeepFogGrey
+    onSurface = DeepFogGrey,
+    onSurfaceVariant = DeepFogGrey,
+    outline = WarmMistGrey
 )
 
 @Composable

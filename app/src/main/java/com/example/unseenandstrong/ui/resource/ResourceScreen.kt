@@ -17,7 +17,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,6 +29,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
 import com.example.unseenandstrong.ui.theme.NightLavender
@@ -50,6 +52,7 @@ fun ResourceScreen(
     val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
     val cardColor = if (isFlareDay) NightLavender.copy(alpha = 0.84f) else SoftCloudGrey
     val factCardColor = if (isFlareDay) NightLavender.copy(alpha = 0.92f) else SoftBlushPink.copy(alpha = 0.16f)
+    var showValidationFacts by rememberSaveable(isFlareDay) { mutableStateOf(!isFlareDay) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -66,7 +69,7 @@ fun ResourceScreen(
                     onClick = onBackToHub,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SoftBlushPink,
-                        contentColor = textColor
+                        contentColor = NightLavender
                     )
                 ) {
                     Text(text = "Back to Speak Strong")
@@ -110,12 +113,27 @@ fun ResourceScreen(
                 )
             }
 
-            items(validationFacts, key = { it.title }) { fact ->
-                ValidationFactCard(
-                    fact = fact,
-                    textColor = textColor,
-                    cardColor = factCardColor
-                )
+            if (showValidationFacts) {
+                items(validationFacts, key = { it.title }) { fact ->
+                    ValidationFactCard(
+                        fact = fact,
+                        textColor = textColor,
+                        cardColor = factCardColor
+                    )
+                }
+            } else {
+                item {
+                    Button(
+                        onClick = { showValidationFacts = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SoftBlushPink,
+                            contentColor = NightLavender
+                        )
+                    ) {
+                        Text("Show validation support")
+                    }
+                }
             }
         }
     }
@@ -133,7 +151,11 @@ private fun ExpandableChecklistCard(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize()
-            .clickable { expanded = !expanded },
+            .semantics { stateDescription = if (expanded) "Expanded" else "Collapsed" }
+            .clickable(
+                role = Role.Button,
+                onClickLabel = if (expanded) "Collapse ${item.title}" else "Expand ${item.title}"
+            ) { expanded = !expanded },
         colors = CardDefaults.cardColors(containerColor = cardColor)
     ) {
         Column(
@@ -150,13 +172,11 @@ private fun ExpandableChecklistCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = textColor
                 )
-                IconButton(onClick = { expanded = !expanded }) {
-                    Icon(
-                        imageVector = Icons.Default.ExpandMore,
-                        contentDescription = if (expanded) "Collapse" else "Expand",
-                        tint = textColor
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = textColor
+                )
             }
 
             if (expanded) {
@@ -201,5 +221,3 @@ private fun ValidationFactCard(
         }
     }
 }
-
-

@@ -283,8 +283,8 @@ Notifications should remain:
 
 ### Emotional Support Layer
 
-- 🟡 Present throughout much of the advocacy experience
-- Additional design-system normalization can make this more visually consistent using the Rose Glow emotional-support token
+- ✅ Present throughout the advocacy experience
+- ✅ Rose Glow is used selectively for reassurance after difficult advocacy work
 
 ---
 
@@ -296,10 +296,10 @@ Before Phase 2 is called fully complete:
 - [ ] Decide whether audio rehearsal belongs in final Phase 2 scope
 - [ ] Complete broader UI and workflow testing
 - [ ] Continue CI hardening
-- [ ] Complete design-system normalization
-- [ ] Run accessibility review across advocacy screens
-- [ ] Verify Flare Day behavior across every advocacy workflow
-- [ ] Remove or resolve stale implementation/documentation inconsistencies
+- [x] Complete design-system normalization
+- [x] Run accessibility review across advocacy screens
+- [x] Verify Flare Day behavior across every advocacy workflow
+- [x] Remove or resolve stale implementation/documentation inconsistencies
 
 ---
 
@@ -713,8 +713,8 @@ Complete the remaining release-quality work:
 - [ ] Final decision on audio rehearsal
 - [ ] Final testing
 - [ ] CI hardening
-- [ ] Accessibility pass
-- [ ] Design-system normalization
+- [x] Accessibility pass
+- [x] Design-system normalization
 - [ ] Documentation cleanup
 - [ ] Release configuration / packaging review
 

@@ -38,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,11 +50,13 @@ import com.example.unseenandstrong.data.local.interaction.InteractionEntity
 import com.example.unseenandstrong.data.local.vault.VaultDocumentEntity
 import com.example.unseenandstrong.ui.benefits.DeadlineDateUtils
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
+import com.example.unseenandstrong.ui.theme.WarmMistGrey
 
 @Composable
 fun ClaimDetailScreen(
@@ -90,6 +93,9 @@ fun ClaimDetailScreen(
     }
 
     val currentClaim = claim!!
+    var showSecondarySections by rememberSaveable(currentClaim.id, isFlareDay) {
+        mutableStateOf(!isFlareDay)
+    }
 
     Surface(modifier = Modifier.fillMaxSize(), color = backgroundColor) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -102,7 +108,7 @@ fun ClaimDetailScreen(
                 IconButton(onClick = onBackToClaims) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = "Back to claims",
                         tint = textColor
                     )
                 }
@@ -117,8 +123,8 @@ fun ClaimDetailScreen(
                 IconButton(onClick = { onEditClaim(currentClaim.id) }) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit Claim",
-                        tint = LavenderPurple
+                        contentDescription = "Edit claim",
+                        tint = if (isFlareDay) SoftBlushPink else DustyMauve
                     )
                 }
             }
@@ -156,17 +162,17 @@ fun ClaimDetailScreen(
                         val daysUntil = DeadlineDateUtils.daysUntil(nearestDate)
                         if (daysUntil in 0..7) {
                             Card(
-                                colors = CardDefaults.cardColors(containerColor = if (isFlareDay) NightLavender else SoftBlushPink),
+                                colors = CardDefaults.cardColors(containerColor = SoftBlushPink),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(16.dp)
                                 ) {
-                                    Icon(Icons.Default.Warning, contentDescription = "Due Soon", tint = PaleCloudWhite)
+                                    Icon(Icons.Default.Warning, contentDescription = null, tint = NightLavender)
                                     Text(
                                         "An important date is coming up on ${DeadlineDateUtils.formatMillisAsDate(nearestDate)}.",
-                                        color = PaleCloudWhite,
+                                        color = NightLavender,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 }
@@ -225,7 +231,11 @@ fun ClaimDetailScreen(
                             taskToEdit = null
                             showTaskDialog = true
                         }) {
-                            Icon(Icons.Default.Add, contentDescription = "Add Task", tint = LavenderPurple)
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "Add task",
+                                tint = if (isFlareDay) SoftBlushPink else DustyMauve
+                            )
                         }
                     }
                 }
@@ -243,11 +253,25 @@ fun ClaimDetailScreen(
                     )
                 }
 
+                if (!showSecondarySections) {
+                    item {
+                        TextButton(
+                            onClick = { showSecondarySections = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Show linked items and notes", color = SoftBlushPink)
+                        }
+                    }
+                } else {
                 item {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                         Text("Linked Interactions", style = MaterialTheme.typography.titleMedium, color = textColor, modifier = Modifier.weight(1f))
                         IconButton(onClick = { showLinkInteractionDialog = true }) {
-                            Icon(Icons.Default.Link, contentDescription = "Link Interaction", tint = LavenderPurple)
+                            Icon(
+                                Icons.Default.Link,
+                                contentDescription = "Link interaction",
+                                tint = if (isFlareDay) SoftBlushPink else DustyMauve
+                            )
                         }
                     }
                 }
@@ -261,7 +285,10 @@ fun ClaimDetailScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
-                                .clickable { onOpenInteraction(interaction.id) }
+                                .clickable(
+                                    onClickLabel = "Open linked interaction",
+                                    onClick = { onOpenInteraction(interaction.id) }
+                                )
                         ) {
                             Text(
                                 interaction.personName.ifBlank { "Unknown" } + " - " + interaction.category,
@@ -269,7 +296,11 @@ fun ClaimDetailScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             IconButton(onClick = { viewModel.unlinkInteraction(interaction.id) }) {
-                                Icon(Icons.Default.LinkOff, contentDescription = "Unlink", tint = DeepFogGrey)
+                                Icon(
+                                    Icons.Default.LinkOff,
+                                    contentDescription = "Unlink interaction with ${interaction.personName.ifBlank { "unknown person" }}",
+                                    tint = textColor
+                                )
                             }
                         }
                     }
@@ -279,7 +310,11 @@ fun ClaimDetailScreen(
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                         Text("Linked Documents", style = MaterialTheme.typography.titleMedium, color = textColor, modifier = Modifier.weight(1f))
                         IconButton(onClick = { showLinkDocumentDialog = true }) {
-                            Icon(Icons.Default.Link, contentDescription = "Link Document", tint = LavenderPurple)
+                            Icon(
+                                Icons.Default.Link,
+                                contentDescription = "Link document",
+                                tint = if (isFlareDay) SoftBlushPink else DustyMauve
+                            )
                         }
                     }
                 }
@@ -293,7 +328,10 @@ fun ClaimDetailScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
-                                .clickable { onOpenDocument(doc.id) }
+                                .clickable(
+                                    onClickLabel = "Open linked document",
+                                    onClick = { onOpenDocument(doc.id) }
+                                )
                         ) {
                             Text(
                                 doc.title.ifBlank { "Document" } + " (${doc.category})",
@@ -301,7 +339,11 @@ fun ClaimDetailScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             IconButton(onClick = { viewModel.unlinkDocument(doc.id) }) {
-                                Icon(Icons.Default.LinkOff, contentDescription = "Unlink", tint = DeepFogGrey)
+                                Icon(
+                                    Icons.Default.LinkOff,
+                                    contentDescription = "Unlink ${doc.title.ifBlank { "document" }}",
+                                    tint = textColor
+                                )
                             }
                         }
                     }
@@ -324,6 +366,7 @@ fun ClaimDetailScreen(
                     ) {
                         Text("Delete Claim")
                     }
+                }
                 }
             }
         }
@@ -384,12 +427,12 @@ fun ClaimDetailScreen(
                                         viewModel.linkInteraction(interaction.id)
                                         showLinkInteractionDialog = false
                                     },
-                                colors = CardDefaults.cardColors(containerColor = SoftCloudGrey)
+                                colors = CardDefaults.cardColors(containerColor = PaleCloudWhite)
                             ) {
                                 Text(
                                     text = interaction.personName.ifBlank { "Unknown" } + " - " + interaction.category,
                                     modifier = Modifier.padding(16.dp),
-                                    color = DeepFogGrey
+                                    color = NightLavender
                                 )
                             }
                         }
@@ -428,12 +471,12 @@ fun ClaimDetailScreen(
                                         viewModel.linkDocument(doc.id)
                                         showLinkDocumentDialog = false
                                     },
-                                colors = CardDefaults.cardColors(containerColor = SoftCloudGrey)
+                                colors = CardDefaults.cardColors(containerColor = PaleCloudWhite)
                             ) {
                                 Text(
                                     text = doc.title.ifBlank { "Document" } + " (${doc.category})",
                                     modifier = Modifier.padding(16.dp),
-                                    color = DeepFogGrey
+                                    color = NightLavender
                                 )
                             }
                         }
@@ -490,14 +533,14 @@ fun TaskRow(
             onCheckedChange = { onToggle() },
             colors = CheckboxDefaults.colors(
                 checkedColor = LavenderPurple,
-                uncheckedColor = DeepFogGrey
+                uncheckedColor = if (isFlareDay) WarmMistGrey else DeepFogGrey
             )
         )
         Column(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 8.dp)
-                .clickable { onEdit() }
+                .clickable(onClickLabel = "Edit ${task.title}", onClick = onEdit)
         ) {
             Text(
                 text = task.title,
@@ -506,11 +549,11 @@ fun TaskRow(
                 ),
                 color = textColor
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = task.category,
                     style = MaterialTheme.typography.bodySmall,
-                    color = LavenderPurple
+                    color = if (isFlareDay) SoftBlushPink else DeepFogGrey
                 )
                 if (task.dueDate != null && !isComplete) {
                     Text(
@@ -522,7 +565,11 @@ fun TaskRow(
             }
         }
         IconButton(onClick = onDelete) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete Task", tint = DeepFogGrey)
+            Icon(
+                Icons.Default.Delete,
+                contentDescription = "Delete ${task.title}",
+                tint = textColor
+            )
         }
     }
 }

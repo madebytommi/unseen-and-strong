@@ -1,6 +1,8 @@
 package com.example.unseenandstrong.ui.accommodation
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,19 +37,22 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.accommodation.AccommodationRequestEntity
+import com.example.unseenandstrong.ui.theme.ButterflyGlow
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
+import com.example.unseenandstrong.ui.theme.PaleCloudWhite
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
-import com.example.unseenandstrong.ui.theme.SoftBorderGray
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
+import com.example.unseenandstrong.ui.theme.WarmMistGrey
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -61,7 +66,7 @@ fun RequestLogScreen(
 ) {
     val requests by viewModel.requests.collectAsState()
     val backgroundColor = if (isFlareDay) NightLavender else SoftCloudGrey
-    val headerTextColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
+    val headerTextColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
 
     var showAddDialog by remember { mutableStateOf(false) }
 
@@ -71,7 +76,7 @@ fun RequestLogScreen(
             FloatingActionButton(
                 onClick = { showAddDialog = true },
                 containerColor = LavenderPurple,
-                contentColor = Color.White
+                contentColor = NightLavender
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add request")
             }
@@ -87,7 +92,7 @@ fun RequestLogScreen(
                 onClick = onBackToHub,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SoftBlushPink,
-                    contentColor = DeepFogGrey
+                    contentColor = NightLavender
                 )
             ) {
                 Text("Back to Speak Strong")
@@ -102,12 +107,14 @@ fun RequestLogScreen(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Keep a gentle record of your FMLA, ADA, and disability requests.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = headerTextColor
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            if (!isFlareDay) {
+                Text(
+                    text = "Keep a gentle record of your FMLA, ADA, and disability requests.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = headerTextColor
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             if (requests.isEmpty()) {
                 Box(
@@ -152,14 +159,14 @@ fun RequestCard(
     request: AccommodationRequestEntity,
     isFlareDay: Boolean
 ) {
-    val cardColor = if (isFlareDay) DeepFogGrey else Color.White
-    val textColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
+    val cardColor = if (isFlareDay) NightLavender.copy(alpha = 0.82f) else PaleCloudWhite
+    val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
 
     val statusColor = when (request.status) {
-        "Approved" -> LavenderPurple
+        "Approved" -> ButterflyGlow
         "Needs Info" -> SoftBlushPink
-        "Denied" -> DeepFogGrey
-        else -> SoftBorderGray
+        "Denied" -> DustyMauve
+        else -> WarmMistGrey
     }
 
     Card(
@@ -178,7 +185,8 @@ fun RequestCard(
                     text = request.requestType,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = textColor
+                    color = textColor,
+                    modifier = Modifier.weight(1f).padding(end = 8.dp)
                 )
                 Surface(
                     shape = RoundedCornerShape(8.dp),
@@ -189,7 +197,7 @@ fun RequestCard(
                         text = request.status,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = statusColor,
+                        color = textColor,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -226,9 +234,10 @@ fun AddRequestDialog(
     var type by remember { mutableStateOf("FMLA") }
     var status by remember { mutableStateOf("Pending") }
     var notes by remember { mutableStateOf("") }
+    var showNotes by rememberSaveable(isFlareDay) { mutableStateOf(!isFlareDay) }
 
-    val dialogBg = if (isFlareDay) DeepFogGrey else Color.White
-    val textColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
+    val dialogBg = if (isFlareDay) NightLavender else PaleCloudWhite
+    val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -237,7 +246,10 @@ fun AddRequestDialog(
             Text("Log Request", color = textColor, fontWeight = FontWeight.Bold)
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 OutlinedTextField(
                     value = type,
                     onValueChange = { type = it },
@@ -246,7 +258,7 @@ fun AddRequestDialog(
                     },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SoftBlushPink,
-                        unfocusedBorderColor = LavenderPurple,
+                        unfocusedBorderColor = WarmMistGrey,
                         focusedTextColor = textColor,
                         unfocusedTextColor = textColor
                     ),
@@ -263,33 +275,45 @@ fun AddRequestDialog(
                     },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SoftBlushPink,
-                        unfocusedBorderColor = LavenderPurple,
+                        unfocusedBorderColor = WarmMistGrey,
                         focusedTextColor = textColor,
                         unfocusedTextColor = textColor
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Notes", color = textColor) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SoftBlushPink,
-                        unfocusedBorderColor = LavenderPurple,
-                        focusedTextColor = textColor,
-                        unfocusedTextColor = textColor
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (showNotes) {
+                    OutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = { Text("Notes (optional)", color = textColor) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SoftBlushPink,
+                            unfocusedBorderColor = WarmMistGrey,
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    TextButton(
+                        onClick = { showNotes = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add optional notes", color = SoftBlushPink)
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = { onSave(type, status, notes) },
                 enabled = type.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = LavenderPurple)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = LavenderPurple,
+                    contentColor = NightLavender
+                )
             ) {
-                Text("Save", color = Color.White)
+                Text("Save")
             }
         },
         dismissButton = {

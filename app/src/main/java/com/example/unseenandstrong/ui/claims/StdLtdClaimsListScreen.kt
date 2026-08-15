@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.claims.DisabilityClaimEntity
 import com.example.unseenandstrong.ui.benefits.DeadlineDateUtils
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
@@ -82,7 +84,11 @@ fun StdLtdClaimsListScreen(
             ) {
                 item {
                     Text(
-                        "An organizational space for short-term and long-term disability claims. This does not calculate eligibility or replace official portals.",
+                        if (isFlareDay) {
+                            "Track a claim here. Official portals and eligibility decisions stay separate."
+                        } else {
+                            "An organizational space for short-term and long-term disability claims. This does not calculate eligibility or replace official portals."
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = textColor,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -90,18 +96,18 @@ fun StdLtdClaimsListScreen(
                 }
 
                 item {
-                    Row(
+                    LazyRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ClaimFilter.entries.forEach { filter ->
+                        items(ClaimFilter.entries) { filter ->
                             FilterChip(
                                 selected = currentFilter == filter,
                                 onClick = { viewModel.setFilter(filter) },
                                 label = { Text(filter.name) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = LavenderPurple,
-                                    selectedLabelColor = PaleCloudWhite
+                                    selectedLabelColor = NightLavender
                                 )
                             )
                         }
@@ -116,7 +122,7 @@ fun StdLtdClaimsListScreen(
                             .padding(vertical = 8.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = LavenderPurple,
-                            contentColor = PaleCloudWhite
+                            contentColor = NightLavender
                         )
                     ) {
                         Text("Add New Claim")
@@ -163,7 +169,10 @@ fun ClaimCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(
+                onClickLabel = "Open ${claim.claimType} claim",
+                onClick = onClick
+            ),
         colors = CardDefaults.cardColors(containerColor = cardColor)
     ) {
         Column(
@@ -178,7 +187,8 @@ fun ClaimCard(
                 Text(
                     text = claim.claimType,
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (isFlareDay) SoftBlushPink else LavenderPurple
+                    color = if (isFlareDay) SoftBlushPink else DustyMauve,
+                    modifier = Modifier.weight(1f).padding(end = 8.dp)
                 )
                 Text(
                     text = claim.status,

@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.script.ScriptEntity
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
@@ -50,7 +51,7 @@ fun ScriptRehearsalScreen(
     val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
     val scriptText = script.textFor(selectedTone)
     val sections = remember(scriptText) { splitScriptSections(scriptText) }
-    var focusMode by rememberSaveable { mutableStateOf(false) }
+    var focusMode by rememberSaveable(scriptText, isFlareDay) { mutableStateOf(isFlareDay) }
     var sectionIndex by rememberSaveable(scriptText) { mutableIntStateOf(0) }
     var practiced by rememberSaveable { mutableStateOf(false) }
 
@@ -77,7 +78,11 @@ fun ScriptRehearsalScreen(
             }
             item {
                 Text(
-                    "Choose the version that feels most usable today.",
+                    if (isFlareDay) {
+                        "One section at a time is enough."
+                    } else {
+                        "Choose the version that feels most usable today."
+                    },
                     style = MaterialTheme.typography.bodyLarge,
                     color = textColor
                 )
@@ -95,7 +100,7 @@ fun ScriptRehearsalScreen(
                             label = { Text(tone.name.lowercase().replaceFirstChar { it.uppercase() }) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = LavenderPurple,
-                                selectedLabelColor = PaleCloudWhite
+                                selectedLabelColor = NightLavender
                             )
                         )
                     }
@@ -116,7 +121,7 @@ fun ScriptRehearsalScreen(
                             Text(
                                 "Section ${sectionIndex + 1} of ${sections.size}",
                                 style = MaterialTheme.typography.labelLarge,
-                                color = if (isFlareDay) SoftBlushPink else LavenderPurple
+                                color = if (isFlareDay) SoftBlushPink else DustyMauve
                             )
                             Text(
                                 sections[sectionIndex],
@@ -163,29 +168,31 @@ fun ScriptRehearsalScreen(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SoftBlushPink,
-                        contentColor = DeepFogGrey
+                        contentColor = NightLavender
                     )
                 ) {
                     Text(if (focusMode) "Show full script" else "Practice one section at a time")
                 }
             }
-            item {
-                Button(
-                    onClick = { practiced = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = LavenderPurple,
-                        contentColor = PaleCloudWhite
-                    )
-                ) { Text("I practiced this") }
-            }
-            if (practiced) {
+            if (!isFlareDay) {
                 item {
-                    Text(
-                        "Preparing is a form of taking care of yourself. The conversation does not have to go perfectly to matter.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = textColor
-                    )
+                    Button(
+                        onClick = { practiced = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = LavenderPurple,
+                            contentColor = NightLavender
+                        )
+                    ) { Text("I practiced this") }
+                }
+                if (practiced) {
+                    item {
+                        Text(
+                            "Preparing is a form of taking care of yourself. The conversation does not have to go perfectly to matter.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = textColor
+                        )
+                    }
                 }
             }
             item {
@@ -194,7 +201,7 @@ fun ScriptRehearsalScreen(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = LavenderPurple,
-                        contentColor = PaleCloudWhite
+                        contentColor = NightLavender
                     )
                 ) { Text("Prepare for the conversation") }
             }

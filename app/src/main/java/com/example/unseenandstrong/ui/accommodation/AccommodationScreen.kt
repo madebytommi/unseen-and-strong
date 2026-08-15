@@ -35,7 +35,9 @@ import com.example.unseenandstrong.ui.theme.DeepFogGrey
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
+import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
+import com.example.unseenandstrong.ui.theme.WarmMistGrey
 import kotlinx.coroutines.launch
 
 @Composable
@@ -66,7 +68,7 @@ fun AccommodationScreen(
             SnackbarHost(hostState = snackbarHostState) { data ->
                 Snackbar(
                     snackbarData = data,
-                    containerColor = SoftCloudGrey,
+                    containerColor = if (isFlareDay) NightLavender else SoftCloudGrey,
                     contentColor = textColor
                 )
             }
@@ -88,8 +90,8 @@ fun AccommodationScreen(
                 Button(
                     onClick = onBackToHub,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = SoftCloudGrey,
-                        contentColor = textColor
+                        containerColor = SoftBlushPink,
+                        contentColor = NightLavender
                     )
                 ) {
                     Text(text = "Back to Speak Strong")
@@ -130,47 +132,49 @@ fun AccommodationScreen(
                     accentColor = LavenderPurple
                 )
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = cardColor)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                if (!isFlareDay || generatedEmail.isNotBlank()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = cardColor)
                     ) {
-                        Text(
-                            text = "Generated Email",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = textColor
-                        )
-                        Text(
-                            text = if (generatedEmail.isBlank()) {
-                                "Your generated email will appear here as you fill out the form."
-                            } else {
-                                generatedEmail
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = textColor
-                        )
-                        Button(
-                            onClick = {
-                                if (generatedEmail.isNotBlank()) {
-                                    val clipboardManager = context.getSystemService(ClipboardManager::class.java)
-                                    clipboardManager?.setPrimaryClip(
-                                        ClipData.newPlainText("Accommodation Request", generatedEmail)
-                                    )
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("Copied!")
-                                    }
-                                }
-                            },
-                            enabled = generatedEmail.isNotBlank(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = LavenderPurple,
-                                contentColor = textColor
-                            )
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(text = "Copy to Clipboard")
+                            Text(
+                                text = "Generated Email",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = textColor
+                            )
+                            Text(
+                                text = if (generatedEmail.isBlank()) {
+                                    "Your generated email will appear here as you fill out the form."
+                                } else {
+                                    generatedEmail
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = textColor
+                            )
+                            Button(
+                                onClick = {
+                                    if (generatedEmail.isNotBlank()) {
+                                        val clipboardManager = context.getSystemService(ClipboardManager::class.java)
+                                        clipboardManager?.setPrimaryClip(
+                                            ClipData.newPlainText("Accommodation Request", generatedEmail)
+                                        )
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar("Copied")
+                                        }
+                                    }
+                                },
+                                enabled = generatedEmail.isNotBlank(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = LavenderPurple,
+                                    contentColor = NightLavender
+                                )
+                            ) {
+                                Text(text = "Copy to Clipboard")
+                            }
                         }
                     }
                 }
@@ -193,7 +197,7 @@ private fun FormField(
         label = { Text(text = label, color = textColor) },
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = accentColor,
-            unfocusedBorderColor = accentColor.copy(alpha = 0.5f),
+            unfocusedBorderColor = WarmMistGrey,
             cursorColor = textColor,
             focusedTextColor = textColor,
             unfocusedTextColor = textColor
@@ -217,4 +221,3 @@ private fun AccommodationScreenPreview() {
         isFlareDay = false
     )
 }
-

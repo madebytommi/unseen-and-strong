@@ -2,6 +2,7 @@ package com.example.unseenandstrong.ui.claims
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,18 +38,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.claims.DisabilityClaimEntity
 import com.example.unseenandstrong.ui.benefits.DeadlineDateUtils
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
+import com.example.unseenandstrong.ui.theme.WarmMistGrey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +73,7 @@ fun ClaimFormScreen(
     val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
     val colors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = LavenderPurple,
-        unfocusedBorderColor = DeepFogGrey,
+        unfocusedBorderColor = WarmMistGrey,
         focusedTextColor = textColor,
         unfocusedTextColor = textColor,
         cursorColor = LavenderPurple
@@ -87,6 +98,21 @@ fun ClaimFormScreen(
     
     var notes by remember { mutableStateOf(claim?.notes ?: "") }
     var enableRequestLog by remember { mutableStateOf(claim?.linkedRequestId != null) }
+    val hasAdditionalDetails = claim?.let {
+        it.administratorName.isNotBlank() || it.claimNumber.isNotBlank() ||
+            listOf(
+                it.filedDate,
+                it.leaveStartDate,
+                it.leaveEndDate,
+                it.benefitStartDate,
+                it.benefitEndDate,
+                it.decisionDate,
+                it.appealDeadline
+            ).any { date -> date != null } || it.notes.isNotBlank() || it.linkedRequestId != null
+    } == true
+    var showAdditionalDetails by rememberSaveable(claim?.id, isFlareDay) {
+        mutableStateOf(!isFlareDay || hasAdditionalDetails)
+    }
 
     val statusOptions = listOf(
         "Preparing", "Submitted", "Waiting", "More information needed",
@@ -124,7 +150,7 @@ fun ClaimFormScreen(
                             label = { Text("STD") },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = LavenderPurple,
-                                selectedLabelColor = PaleCloudWhite
+                                selectedLabelColor = NightLavender
                             )
                         )
                         FilterChip(
@@ -133,7 +159,7 @@ fun ClaimFormScreen(
                             label = { Text("LTD") },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = LavenderPurple,
-                                selectedLabelColor = PaleCloudWhite
+                                selectedLabelColor = NightLavender
                             )
                         )
                     }
@@ -181,38 +207,53 @@ fun ClaimFormScreen(
                     )
                 }
 
-                item {
-                    OutlinedTextField(
-                        value = administratorName,
-                        onValueChange = { administratorName = it },
-                        label = { Text("Administrator (Insurance)") },
-                        colors = colors,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                item {
-                    OutlinedTextField(
-                        value = claimNumber,
-                        onValueChange = { claimNumber = it },
-                        label = { Text("Claim Number") },
-                        colors = colors,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                item {
-                    Text("Claim and Leave Dates", style = MaterialTheme.typography.titleMedium, color = textColor, modifier = Modifier.padding(top = 16.dp))
-                }
-
-                item {
-                    DatePickerField("Filed Date", filedDate, isFlareDay, onDateSelected = { filedDate = it })
-                    DatePickerField("Leave Start", leaveStartDate, isFlareDay, onDateSelected = { leaveStartDate = it })
-                    DatePickerField("Leave End", leaveEndDate, isFlareDay, onDateSelected = { leaveEndDate = it })
-                    DatePickerField("Benefit Start", benefitStartDate, isFlareDay, onDateSelected = { benefitStartDate = it })
-                    DatePickerField("Benefit End", benefitEndDate, isFlareDay, onDateSelected = { benefitEndDate = it })
-                    DatePickerField("Decision Date", decisionDate, isFlareDay, onDateSelected = { decisionDate = it })
-                    DatePickerField("Appeal Deadline", appealDeadline, isFlareDay, onDateSelected = { appealDeadline = it })
+                if (!showAdditionalDetails) {
+                    item {
+                        TextButton(
+                            onClick = { showAdditionalDetails = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Show additional claim details", color = SoftBlushPink)
+                        }
+                    }
+                } else {
+                    item {
+                        Text(
+                            "Additional Details",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = if (isFlareDay) SoftBlushPink else DustyMauve
+                        )
+                    }
+                    item {
+                        OutlinedTextField(
+                            value = administratorName,
+                            onValueChange = { administratorName = it },
+                            label = { Text("Administrator (optional)") },
+                            colors = colors,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    item {
+                        OutlinedTextField(
+                            value = claimNumber,
+                            onValueChange = { claimNumber = it },
+                            label = { Text("Claim Number (optional)") },
+                            colors = colors,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    item {
+                        Text("Claim and Leave Dates", style = MaterialTheme.typography.titleMedium, color = textColor)
+                    }
+                    item {
+                        DatePickerField("Filed Date", filedDate, isFlareDay, onDateSelected = { filedDate = it })
+                        DatePickerField("Leave Start", leaveStartDate, isFlareDay, onDateSelected = { leaveStartDate = it })
+                        DatePickerField("Leave End", leaveEndDate, isFlareDay, onDateSelected = { leaveEndDate = it })
+                        DatePickerField("Benefit Start", benefitStartDate, isFlareDay, onDateSelected = { benefitStartDate = it })
+                        DatePickerField("Benefit End", benefitEndDate, isFlareDay, onDateSelected = { benefitEndDate = it })
+                        DatePickerField("Decision Date", decisionDate, isFlareDay, onDateSelected = { decisionDate = it })
+                        DatePickerField("Appeal Deadline", appealDeadline, isFlareDay, onDateSelected = { appealDeadline = it })
+                    }
                 }
 
                 item {
@@ -230,51 +271,58 @@ fun ClaimFormScreen(
                     DatePickerField("Next Action Due Date", nextActionDueDate, isFlareDay, onDateSelected = { nextActionDueDate = it })
                 }
                 
-                item {
-                    Text("Notes", style = MaterialTheme.typography.titleMedium, color = textColor, modifier = Modifier.padding(top = 16.dp))
-                    OutlinedTextField(
-                        value = notes,
-                        onValueChange = { notes = it },
-                        label = { Text("Private Notes") },
-                        colors = colors,
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3
-                    )
-                }
-
-                item {
-                    Text("Request Log Integration", style = MaterialTheme.typography.titleMedium, color = textColor, modifier = Modifier.padding(top = 16.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Sync with Request Log", color = textColor)
-                            Text(
-                                "Creates or updates an entry in the Request Log.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = textColor
-                            )
-                        }
-                        Switch(
-                            checked = enableRequestLog,
-                            onCheckedChange = { enableRequestLog = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = LavenderPurple,
-                                uncheckedThumbColor = SoftBlushPink,
-                                checkedTrackColor = LavenderPurple.copy(alpha = 0.45f),
-                                uncheckedTrackColor = SoftBlushPink.copy(alpha = 0.45f)
-                            )
+                if (showAdditionalDetails) {
+                    item {
+                        Text("Notes", style = MaterialTheme.typography.titleMedium, color = textColor)
+                        OutlinedTextField(
+                            value = notes,
+                            onValueChange = { notes = it },
+                            label = { Text("Private Notes (optional)") },
+                            colors = colors,
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3
                         )
                     }
-                    if (claim?.linkedRequestId != null) {
-                        Text(
-                            "This claim is currently linked to the Request Log.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = LavenderPurple,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
+
+                    item {
+                        Text("Request Log Integration", style = MaterialTheme.typography.titleMedium, color = textColor)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Sync with Request Log", color = textColor)
+                                if (!isFlareDay) {
+                                    Text(
+                                        "Creates or updates an entry in the Request Log.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = textColor
+                                    )
+                                }
+                            }
+                            Switch(
+                                checked = enableRequestLog,
+                                onCheckedChange = { enableRequestLog = it },
+                                modifier = Modifier.semantics {
+                                    stateDescription = if (enableRequestLog) "On" else "Off"
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = LavenderPurple,
+                                    uncheckedThumbColor = SoftBlushPink,
+                                    checkedTrackColor = LavenderPurple.copy(alpha = 0.45f),
+                                    uncheckedTrackColor = SoftBlushPink.copy(alpha = 0.45f)
+                                )
+                            )
+                        }
+                        if (claim?.linkedRequestId != null) {
+                            Text(
+                                "This claim is currently linked to the Request Log.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = textColor,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
                     }
                 }
 
@@ -320,7 +368,7 @@ fun ClaimFormScreen(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = LavenderPurple,
-                            contentColor = PaleCloudWhite
+                            contentColor = NightLavender
                         )
                     ) {
                         Text("Save Claim")
@@ -343,7 +391,7 @@ fun DatePickerField(
     val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
     val colors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = LavenderPurple,
-        unfocusedBorderColor = DeepFogGrey,
+        unfocusedBorderColor = WarmMistGrey,
         focusedTextColor = textColor,
         unfocusedTextColor = textColor,
         disabledTextColor = textColor,
@@ -355,21 +403,34 @@ fun DatePickerField(
         initialSelectedDateMillis = DeadlineDateUtils.toPickerUtcMillis(selectedMillis)
     )
 
-    OutlinedTextField(
-        value = if (selectedMillis != null) DeadlineDateUtils.formatMillisAsDate(selectedMillis) else "Unset",
-        onValueChange = {},
-        label = { Text(label) },
-        readOnly = true,
-        enabled = false,
-        colors = colors,
+    val displayedDate = selectedMillis?.let(DeadlineDateUtils::formatMillisAsDate) ?: "Not set"
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable { showDialog = true },
-        trailingIcon = {
-            Icon(Icons.Default.CalendarToday, contentDescription = "Select Date", tint = textColor)
-        }
-    )
+            .clickable(onClickLabel = "Choose $label") { showDialog = true }
+            .clearAndSetSemantics {
+                contentDescription = "$label, $displayedDate"
+                role = Role.Button
+                onClick("Choose $label") {
+                    showDialog = true
+                    true
+                }
+            }
+    ) {
+        OutlinedTextField(
+            value = displayedDate,
+            onValueChange = {},
+            label = { Text(label) },
+            readOnly = true,
+            enabled = false,
+            colors = colors,
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = textColor)
+            }
+        )
+    }
     
     if (showDialog) {
         DatePickerDialog(
@@ -385,11 +446,16 @@ fun DatePickerField(
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    onDateSelected(null)
-                    showDialog = false
-                }) {
-                    Text("Clear", color = LavenderPurple)
+                Row {
+                    TextButton(onClick = {
+                        onDateSelected(null)
+                        showDialog = false
+                    }) {
+                        Text("Clear", color = LavenderPurple)
+                    }
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Cancel", color = LavenderPurple)
+                    }
                 }
             }
         ) {

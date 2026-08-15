@@ -6,6 +6,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -53,6 +56,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.interaction.InteractionEntity
 import com.example.unseenandstrong.ui.theme.ButterflyGlow
@@ -60,8 +65,10 @@ import com.example.unseenandstrong.ui.theme.DeepFogGrey
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
+import com.example.unseenandstrong.ui.theme.RoseGlow
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
+import com.example.unseenandstrong.ui.theme.WarmMistGrey
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -106,7 +113,7 @@ fun InteractionScreen(
             FloatingActionButton(
                 onClick = { showAddDialog = true },
                 containerColor = LavenderPurple,
-                contentColor = textColor
+                contentColor = NightLavender
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -137,10 +144,10 @@ fun InteractionScreen(
                         )
                     },
                     colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
-                        containerColor = SoftCloudGrey,
+                        containerColor = if (isFlareDay) NightLavender else SoftCloudGrey,
                         labelColor = textColor,
                         selectedContainerColor = ButterflyGlow,
-                        selectedLabelColor = textColor
+                        selectedLabelColor = NightLavender
                     ),
                     modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
                 )
@@ -189,7 +196,7 @@ fun InteractionScreen(
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (isFlareDay) LavenderPurple.copy(alpha = 0.38f) else SoftBlushPink.copy(alpha = 0.48f)
+                                containerColor = RoseGlow
                             )
                         ) {
                             Column(
@@ -200,12 +207,12 @@ fun InteractionScreen(
                                 Text(
                                     text = "You showed up for yourself",
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = textColor
+                                    color = NightLavender
                                 )
                                 Text(
                                     text = currentValidationMessage,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = textColor
+                                    color = NightLavender
                                 )
                             }
                         }
@@ -218,6 +225,7 @@ fun InteractionScreen(
     if (showAddDialog) {
         AddInteractionDialog(
             textColor = textColor,
+            isFlareDay = isFlareDay,
             onDismiss = { showAddDialog = false },
             onSave = { category, personName, organization, needsFollowUp, followUpDate, notes ->
                 viewModel.saveInteraction(
@@ -258,7 +266,7 @@ private fun InteractionTimelineList(
                 Text(
                     text = monthHeader,
                     style = MaterialTheme.typography.labelLarge,
-                    color = DeepFogGrey,
+                    color = textColor,
                     modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                 )
             }
@@ -364,7 +372,7 @@ private fun InteractionCard(
             Text(
                 text = interaction.category,
                 style = MaterialTheme.typography.labelMedium,
-                color = LavenderPurple
+                color = if (textColor == PaleCloudWhite) SoftBlushPink else DeepFogGrey
             )
             Text(
                 text = interaction.personName,
@@ -389,14 +397,14 @@ private fun InteractionCard(
                 Text(
                     text = "Ready for follow-up when you have the spoons.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = LavenderPurple
+                    color = if (textColor == PaleCloudWhite) SoftBlushPink else DeepFogGrey
                 )
             }
             interaction.followUpDate?.let { followUpDate ->
                 Text(
                     text = "Follow up by: ${formatDate(followUpDate)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = LavenderPurple
+                    color = if (textColor == PaleCloudWhite) SoftBlushPink else DeepFogGrey
                 )
             }
             Text(
@@ -411,6 +419,7 @@ private fun InteractionCard(
 @Composable
 private fun AddInteractionDialog(
     textColor: androidx.compose.ui.graphics.Color,
+    isFlareDay: Boolean,
     onDismiss: () -> Unit,
     onSave: (
         category: String,
@@ -427,10 +436,11 @@ private fun AddInteractionDialog(
     var notes by rememberSaveable { mutableStateOf("") }
     var needsFollowUp by rememberSaveable { mutableStateOf(false) }
     var selectedFollowUpOption by rememberSaveable { mutableStateOf<FollowUpOption?>(null) }
+    var showOptionalDetails by rememberSaveable(isFlareDay) { mutableStateOf(!isFlareDay) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = SoftCloudGrey,
+        containerColor = if (isFlareDay) NightLavender else PaleCloudWhite,
         title = {
             Text(
                 text = "Add Interaction",
@@ -439,14 +449,17 @@ private fun AddInteractionDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
                     label = { Text("Category", color = textColor) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = LavenderPurple,
-                        unfocusedBorderColor = LavenderPurple.copy(alpha = 0.5f),
+                        unfocusedBorderColor = WarmMistGrey,
                         focusedTextColor = textColor,
                         unfocusedTextColor = textColor,
                         cursorColor = textColor
@@ -459,40 +472,49 @@ private fun AddInteractionDialog(
                     label = { Text("Person", color = textColor) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SoftBlushPink,
-                        unfocusedBorderColor = SoftBlushPink.copy(alpha = 0.5f),
+                        unfocusedBorderColor = WarmMistGrey,
                         focusedTextColor = textColor,
                         unfocusedTextColor = textColor,
                         cursorColor = textColor
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = organization,
-                    onValueChange = { organization = it },
-                    label = { Text("Organization", color = textColor) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = LavenderPurple,
-                        unfocusedBorderColor = LavenderPurple.copy(alpha = 0.5f),
-                        focusedTextColor = textColor,
-                        unfocusedTextColor = textColor,
-                        cursorColor = textColor
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Notes", color = textColor) },
-                    minLines = 3,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SoftBlushPink,
-                        unfocusedBorderColor = SoftBlushPink.copy(alpha = 0.5f),
-                        focusedTextColor = textColor,
-                        unfocusedTextColor = textColor,
-                        cursorColor = textColor
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (showOptionalDetails) {
+                    OutlinedTextField(
+                        value = organization,
+                        onValueChange = { organization = it },
+                        label = { Text("Organization (optional)", color = textColor) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = LavenderPurple,
+                            unfocusedBorderColor = WarmMistGrey,
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            cursorColor = textColor
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = { Text("Notes (optional)", color = textColor) },
+                        minLines = 3,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SoftBlushPink,
+                            unfocusedBorderColor = WarmMistGrey,
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            cursorColor = textColor
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    TextButton(
+                        onClick = { showOptionalDetails = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add optional details", color = SoftBlushPink)
+                    }
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -513,6 +535,9 @@ private fun AddInteractionDialog(
                                 null
                             }
                         },
+                        modifier = Modifier.semantics {
+                            stateDescription = if (needsFollowUp) "On" else "Off"
+                        },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = LavenderPurple,
                             uncheckedThumbColor = SoftBlushPink,
@@ -528,11 +553,11 @@ private fun AddInteractionDialog(
                         style = MaterialTheme.typography.bodySmall,
                         color = textColor.copy(alpha = 0.85f)
                     )
-                    Row(
+                    LazyRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        FollowUpOption.entries.forEach { option ->
+                        items(FollowUpOption.entries) { option ->
                             val isSelected = selectedFollowUpOption == option
                             Button(
                                 onClick = { selectedFollowUpOption = option },
@@ -542,9 +567,8 @@ private fun AddInteractionDialog(
                                     } else {
                                         SoftBlushPink.copy(alpha = 0.55f)
                                     },
-                                    contentColor = textColor
-                                ),
-                                modifier = Modifier.weight(1f)
+                                    contentColor = NightLavender
+                                )
                             ) {
                                 Text(text = option.label)
                             }
@@ -574,7 +598,7 @@ private fun AddInteractionDialog(
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = LavenderPurple,
-                        contentColor = textColor
+                        contentColor = NightLavender
                     )
                 ) {
                     Text("Save")
@@ -586,7 +610,7 @@ private fun AddInteractionDialog(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SoftBlushPink,
-                    contentColor = textColor
+                    contentColor = NightLavender
                 )
             ) {
                 Text("Cancel")
@@ -642,4 +666,3 @@ private fun formatMonthYear(timestamp: Long): String {
         .toLocalDate()
         .format(formatter)
 }
-

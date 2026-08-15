@@ -4,7 +4,9 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -62,6 +64,24 @@ class SpeakStrongNavigationTest {
         composeRule.onNodeWithText("Back to saved plans").performClick()
         waitForText("Saved Advocacy Plans")
         assertSpeakStrongSelected()
+    }
+
+    @Test
+    fun flareDayHubReducesVisibleToolsWithoutRemovingAccess() {
+        composeRule.onNode(isToggleable() and hasStateDescription("Off")).performClick()
+        composeRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Saved Advocacy Plans").assertExists()
+        composeRule.onNodeWithText("Show all advocacy tools").assertExists()
+        composeRule.onNodeWithText("Draft ADA Request").assertDoesNotExist()
+        composeRule.onNode(isToggleable() and hasStateDescription("Off")).assertExists()
+
+        composeRule.onNodeWithText("Show all advocacy tools").performClick()
+        composeRule.onNodeWithText("Draft ADA Request").assertExists()
+        composeRule.onNodeWithText("Advocacy Resources").assertExists()
+        composeRule.onNodeWithText("Request Log").assertExists()
+        composeRule.onNodeWithText("STD/LTD Claims").assertExists()
     }
 
     private fun openHubDestination(label: String) {

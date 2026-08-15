@@ -41,6 +41,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
@@ -83,6 +85,7 @@ import com.example.unseenandstrong.ui.speakstrong.SpeakStrongViewModel
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
+import com.example.unseenandstrong.ui.theme.PaleCloudWhite
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
 import com.example.unseenandstrong.ui.theme.UnseenAndStrongTheme
@@ -730,7 +733,7 @@ private fun BottomNavigationBar(
                 icon = {
                     Icon(
                         imageVector = screen.icon,
-                        contentDescription = screen.label
+                        contentDescription = null
                     )
                 },
                 selectedContentColor = if (isFlareDay) {
@@ -738,7 +741,11 @@ private fun BottomNavigationBar(
                 } else {
                     LavenderPurple
                 },
-                unselectedContentColor = DeepFogGrey
+                unselectedContentColor = if (isFlareDay) {
+                    PaleCloudWhite.copy(alpha = 0.78f)
+                } else {
+                    DeepFogGrey
+                }
             )
         }
     }
@@ -756,10 +763,16 @@ private fun FlareDayModeToggle(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Flare Day Mode", color = DeepFogGrey)
+        Text(
+            "Flare Day Mode",
+            color = if (isFlareDayActive) PaleCloudWhite else DeepFogGrey
+        )
         Switch(
             checked = isFlareDayActive,
             onCheckedChange = { onToggle() },
+            modifier = Modifier.semantics {
+                stateDescription = if (isFlareDayActive) "On" else "Off"
+            },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = LavenderPurple,
                 uncheckedThumbColor = SoftBlushPink,

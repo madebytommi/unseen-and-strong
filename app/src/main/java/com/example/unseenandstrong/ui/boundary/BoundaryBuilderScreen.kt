@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -32,9 +33,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
+import com.example.unseenandstrong.ui.theme.RoseGlow
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
 import kotlinx.coroutines.launch
@@ -114,8 +117,8 @@ fun BoundaryBuilderScreen(
             SnackbarHost(hostState = snackbarHostState) { snackbarData ->
                 Snackbar(
                     snackbarData = snackbarData,
-                    containerColor = if (isFlareDay) NightLavender.copy(alpha = 0.92f) else SoftCloudGrey,
-                    contentColor = textColor
+                    containerColor = if (isFlareDay) NightLavender.copy(alpha = 0.92f) else RoseGlow,
+                    contentColor = if (isFlareDay) PaleCloudWhite else NightLavender
                 )
             }
         }
@@ -124,14 +127,15 @@ fun BoundaryBuilderScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Button(
                 onClick = onBackToHub,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SoftBlushPink,
-                    contentColor = textColor
+                    contentColor = NightLavender
                 )
             ) {
                 Text("Back to Speak Strong")
@@ -140,13 +144,15 @@ fun BoundaryBuilderScreen(
             Text(
                 text = "It is okay to protect your energy.",
                 style = MaterialTheme.typography.headlineSmall,
-                color = LavenderPurple
+                color = if (isFlareDay) SoftBlushPink else DustyMauve
             )
-            Text(
-                text = "Pick a scenario and adjust your boundary tone.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = textColor
-            )
+            if (!isFlareDay) {
+                Text(
+                    text = "Pick a scenario and adjust your boundary tone.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textColor
+                )
+            }
 
             Row(
                 modifier = Modifier
@@ -161,31 +167,34 @@ fun BoundaryBuilderScreen(
                         onClick = { selectedScenario = scenario.name },
                         label = { Text(scenario.name) },
                         colors = FilterChipDefaults.filterChipColors(
-                            containerColor = SoftCloudGrey,
+                            containerColor = if (isFlareDay) NightLavender else SoftCloudGrey,
                             labelColor = textColor,
-                            selectedContainerColor = LavenderPurple.copy(alpha = 0.55f),
-                            selectedLabelColor = textColor
+                            selectedContainerColor = LavenderPurple,
+                            selectedLabelColor = NightLavender
                         )
                     )
                 }
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Firmness.entries.forEach { firmness ->
                     val selected = selectedFirmness == firmness
-                    Button(
+                    FilterChip(
+                        selected = selected,
                         onClick = { selectedFirmness = firmness },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (selected) LavenderPurple else SoftBlushPink.copy(alpha = 0.75f),
-                            contentColor = textColor
+                        label = { Text(text = firmness.label) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = if (isFlareDay) NightLavender else SoftCloudGrey,
+                            labelColor = textColor,
+                            selectedContainerColor = LavenderPurple,
+                            selectedLabelColor = NightLavender
                         )
-                    ) {
-                        Text(text = firmness.label)
-                    }
+                    )
                 }
             }
 
@@ -201,7 +210,7 @@ fun BoundaryBuilderScreen(
                     Text(
                         text = selectedScenario,
                         style = MaterialTheme.typography.titleMedium,
-                        color = LavenderPurple
+                        color = if (isFlareDay) SoftBlushPink else DustyMauve
                     )
                     Text(
                         text = generatedScript,
@@ -215,7 +224,7 @@ fun BoundaryBuilderScreen(
                 onClick = {
                     scope.launch {
                         snackbarHostState.showSnackbar(
-                            message = "Boundary set. You did great.",
+                            message = "You practiced this boundary.",
                             duration = SnackbarDuration.Short
                         )
                     }
@@ -223,7 +232,7 @@ fun BoundaryBuilderScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SoftBlushPink,
-                    contentColor = textColor
+                    contentColor = NightLavender
                 )
             ) {
                 Text("Practice")
@@ -231,5 +240,3 @@ fun BoundaryBuilderScreen(
         }
     }
 }
-
-

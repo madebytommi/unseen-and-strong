@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -51,6 +52,7 @@ import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
+import com.example.unseenandstrong.ui.theme.WarmMistGrey
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -88,7 +90,7 @@ fun VaultScreen(
                     )
                 },
                 containerColor = LavenderPurple,
-                contentColor = textColor
+                contentColor = NightLavender
             ) {
                 Icon(
                     imageVector = Icons.Default.Folder,
@@ -133,6 +135,7 @@ fun VaultScreen(
                             document = document,
                             textColor = textColor,
                             backgroundColor = cardColor,
+                            showSecondaryMetadata = !isFlareDay,
                             onDelete = { viewModel.deleteDocument(document) }
                         )
                     }
@@ -144,6 +147,7 @@ fun VaultScreen(
     if (showSaveDialog && selectedUri != null) {
         SaveVaultDocumentDialog(
             textColor = textColor,
+            isFlareDay = isFlareDay,
             onDismiss = {
                 showSaveDialog = false
                 selectedUri = null
@@ -166,6 +170,7 @@ private fun VaultDocumentCard(
     document: VaultDocumentEntity,
     textColor: Color,
     backgroundColor: Color,
+    showSecondaryMetadata: Boolean,
     onDelete: () -> Unit
 ) {
     Card(
@@ -181,13 +186,20 @@ private fun VaultDocumentCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Icon(
                         imageVector = categoryIcon(document.category),
                         contentDescription = null,
                         tint = lavenderTintForCategory(document.category)
                     )
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Text(
                             text = document.title,
                             style = MaterialTheme.typography.headlineSmall,
@@ -204,23 +216,25 @@ private fun VaultDocumentCard(
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete document",
+                        contentDescription = "Delete ${document.title.ifBlank { "document" }}",
                         tint = textColor
                     )
                 }
             }
 
-            Text(
-                text = formatDateAdded(document.dateAdded),
-                style = MaterialTheme.typography.bodySmall,
-                color = textColor
-            )
+            if (showSecondaryMetadata) {
+                Text(
+                    text = formatDateAdded(document.dateAdded),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = textColor
+                )
 
-            Text(
-                text = document.fileUri,
-                style = MaterialTheme.typography.labelSmall,
-                color = textColor.copy(alpha = 0.78f)
-            )
+                Text(
+                    text = document.fileUri,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = textColor.copy(alpha = 0.78f)
+                )
+            }
         }
     }
 }
@@ -228,6 +242,7 @@ private fun VaultDocumentCard(
 @Composable
 private fun SaveVaultDocumentDialog(
     textColor: Color,
+    isFlareDay: Boolean,
     onDismiss: () -> Unit,
     onSave: (title: String, category: String) -> Unit
 ) {
@@ -236,7 +251,7 @@ private fun SaveVaultDocumentDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = SoftCloudGrey,
+        containerColor = if (isFlareDay) NightLavender else PaleCloudWhite,
         title = {
             Text(
                 text = "Save document",
@@ -252,7 +267,7 @@ private fun SaveVaultDocumentDialog(
                     label = { Text("Title", color = textColor) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = LavenderPurple,
-                        unfocusedBorderColor = LavenderPurple.copy(alpha = 0.5f),
+                        unfocusedBorderColor = WarmMistGrey,
                         focusedTextColor = textColor,
                         unfocusedTextColor = textColor,
                         cursorColor = textColor
@@ -265,25 +280,15 @@ private fun SaveVaultDocumentDialog(
                     style = MaterialTheme.typography.titleSmall,
                     color = textColor
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    VaultCategoryChip(
-                        text = "Insurance",
-                        selected = category == "Insurance",
-                        textColor = textColor,
-                        onClick = { category = "Insurance" }
-                    )
-                    VaultCategoryChip(
-                        text = "Medical",
-                        selected = category == "Medical",
-                        textColor = textColor,
-                        onClick = { category = "Medical" }
-                    )
-                    VaultCategoryChip(
-                        text = "Work",
-                        selected = category == "Work",
-                        textColor = textColor,
-                        onClick = { category = "Work" }
-                    )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(listOf("Insurance", "Medical", "Work")) { option ->
+                        VaultCategoryChip(
+                            text = option,
+                            selected = category == option,
+                            textColor = textColor,
+                            onClick = { category = option }
+                        )
+                    }
                 }
             }
         },
@@ -292,7 +297,7 @@ private fun SaveVaultDocumentDialog(
                 onClick = { onSave(title.trim(), category) },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = LavenderPurple,
-                    contentColor = textColor
+                    contentColor = NightLavender
                 )
             ) {
                 Text("Save")
@@ -303,7 +308,7 @@ private fun SaveVaultDocumentDialog(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SoftBlushPink,
-                    contentColor = textColor
+                    contentColor = NightLavender
                 )
             ) {
                 Text("Cancel")
@@ -322,10 +327,12 @@ private fun VaultCategoryChip(
     FilterChip(
         selected = selected,
         onClick = onClick,
-        label = { Text(text, color = textColor) },
+        label = { Text(text) },
         colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
             selectedContainerColor = LavenderPurple,
-            containerColor = SoftCloudGrey
+            selectedLabelColor = NightLavender,
+            labelColor = textColor,
+            containerColor = if (textColor == PaleCloudWhite) NightLavender else SoftCloudGrey
         )
     )
 }
@@ -350,4 +357,3 @@ private fun lavenderTintForCategory(category: String): Color = when (category.lo
     "work" -> DeepFogGrey
     else -> LavenderPurple
 }
-

@@ -32,13 +32,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.advocacy.AdvocacySessionEntity
 import com.example.unseenandstrong.ui.benefits.DeadlineDateUtils
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
+import com.example.unseenandstrong.ui.theme.RoseGlow
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
 import java.text.SimpleDateFormat
@@ -71,6 +75,9 @@ fun AdvocacyReflectionScreen(
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var savedMessage by rememberSaveable(session.id) { mutableStateOf(false) }
     val alreadyLinked = session.linkedInteractionId != null
+    var showOptionalReflectionDetails by rememberSaveable(session.id, isFlareDay) {
+        mutableStateOf(!isFlareDay || reflectionNote.isNotBlank() || alreadyLinked)
+    }
 
     fun currentInput() = AdvocacyReflectionInput(
         conversationHappened = conversationHappened,
@@ -119,7 +126,7 @@ fun AdvocacyReflectionScreen(
                         Text(
                             "Preparation",
                             style = MaterialTheme.typography.labelLarge,
-                            color = if (isFlareDay) SoftBlushPink else LavenderPurple
+                            color = if (isFlareDay) SoftBlushPink else DustyMauve
                         )
                         Text(session.scriptTitle, style = MaterialTheme.typography.titleLarge, color = textColor)
                         if (session.desiredOutcome.isNotBlank()) {
@@ -143,7 +150,7 @@ fun AdvocacyReflectionScreen(
                             label = { Text(option) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = LavenderPurple,
-                                selectedLabelColor = PaleCloudWhite
+                                selectedLabelColor = NightLavender
                             )
                         )
                     }
@@ -179,18 +186,20 @@ fun AdvocacyReflectionScreen(
                             label = { Text(option) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = LavenderPurple,
-                                selectedLabelColor = PaleCloudWhite
+                                selectedLabelColor = NightLavender
                             )
                         )
                     }
                 }
             }
-            item {
-                Text(
-                    "Partly meeting your goal still gives you useful information.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = textColor
-                )
+            if (!isFlareDay) {
+                item {
+                    Text(
+                        "Partly meeting your goal still gives you useful information.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = textColor
+                    )
+                }
             }
             item {
                 Row(
@@ -206,7 +215,10 @@ fun AdvocacyReflectionScreen(
                     )
                     Switch(
                         checked = needsFollowUp,
-                        onCheckedChange = { needsFollowUp = it; savedMessage = false }
+                        onCheckedChange = { needsFollowUp = it; savedMessage = false },
+                        modifier = Modifier.semantics {
+                            stateDescription = if (needsFollowUp) "On" else "Off"
+                        }
                     )
                 }
             }
@@ -217,7 +229,7 @@ fun AdvocacyReflectionScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = SoftBlushPink,
-                            contentColor = DeepFogGrey
+                            contentColor = NightLavender
                         )
                     ) {
                         Text(if (followUpDate == null) "Choose follow-up date" else "Change follow-up date")
@@ -240,15 +252,6 @@ fun AdvocacyReflectionScreen(
                 }
             }
             item {
-                AdvocacyTextField(
-                    reflectionNote,
-                    { reflectionNote = it; savedMessage = false },
-                    "Private notes",
-                    textColor,
-                    minLines = 3
-                )
-            }
-            item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -262,11 +265,33 @@ fun AdvocacyReflectionScreen(
                     )
                     Switch(
                         checked = reflectionComplete,
-                        onCheckedChange = { reflectionComplete = it; savedMessage = false }
+                        onCheckedChange = { reflectionComplete = it; savedMessage = false },
+                        modifier = Modifier.semantics {
+                            stateDescription = if (reflectionComplete) "On" else "Off"
+                        }
                     )
                 }
             }
-            item {
+            if (!showOptionalReflectionDetails) {
+                item {
+                    TextButton(
+                        onClick = { showOptionalReflectionDetails = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add optional reflection details", color = SoftBlushPink)
+                    }
+                }
+            } else {
+                item {
+                    AdvocacyTextField(
+                        reflectionNote,
+                        { reflectionNote = it; savedMessage = false },
+                        "Private notes (optional)",
+                        textColor,
+                        minLines = 3
+                    )
+                }
+                item {
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = if (isFlareDay) NightLavender.copy(alpha = 0.82f) else PaleCloudWhite
@@ -291,7 +316,10 @@ fun AdvocacyReflectionScreen(
                             Switch(
                                 checked = alreadyLinked || exportToInteractionLog,
                                 onCheckedChange = { exportToInteractionLog = it; savedMessage = false },
-                                enabled = !alreadyLinked
+                                enabled = !alreadyLinked,
+                                modifier = Modifier.semantics {
+                                    stateDescription = if (alreadyLinked || exportToInteractionLog) "On" else "Off"
+                                }
                             )
                         }
                         Text(
@@ -306,23 +334,30 @@ fun AdvocacyReflectionScreen(
                     }
                 }
             }
+            }
             item {
                 Button(
                     onClick = { onSave(currentInput()) { savedMessage = true } },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = LavenderPurple,
-                        contentColor = PaleCloudWhite
+                        contentColor = NightLavender
                     )
                 ) { Text("Save reflection") }
             }
             if (savedMessage) {
                 item {
-                    Text(
-                        "Reflection saved. Be gentle with yourself after a hard conversation.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = textColor
-                    )
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = RoseGlow),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            "Reflection saved. Be gentle with yourself after a hard conversation.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = NightLavender,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
                 }
             }
         }

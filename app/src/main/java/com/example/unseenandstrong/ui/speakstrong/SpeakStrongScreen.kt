@@ -25,11 +25,17 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.script.ScriptEntity
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
@@ -59,6 +65,9 @@ fun SpeakStrongScreen(
     val selectedTone by viewModel.selectedTone.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val scripts by viewModel.scripts.collectAsState()
+    var showAllAdvocacyTools by rememberSaveable(isFlareDay) {
+        mutableStateOf(!isFlareDay)
+    }
 
     Surface(modifier = Modifier.fillMaxSize(), color = backgroundColor) {
         LazyColumn(
@@ -105,6 +114,9 @@ fun SpeakStrongScreen(
                             Switch(
                                 checked = followUpRemindersEnabled,
                                 onCheckedChange = onFollowUpRemindersChanged,
+                                modifier = Modifier.semantics {
+                                    stateDescription = if (followUpRemindersEnabled) "On" else "Off"
+                                },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = SoftBlushPink,
                                     checkedTrackColor = LavenderPurple,
@@ -113,11 +125,13 @@ fun SpeakStrongScreen(
                                 )
                             )
                         }
-                        Text(
-                            "Get a gentle local notification for advocacy follow-ups and deadlines you’re tracking.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = textColor
-                        )
+                        if (!isFlareDay) {
+                            Text(
+                                "Get a gentle local notification for advocacy follow-ups and deadlines you’re tracking.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = textColor
+                            )
+                        }
                         followUpReminderMessage?.let { message ->
                             Text(
                                 message,
@@ -139,13 +153,35 @@ fun SpeakStrongScreen(
                     }
                 }
             }
-            item { AdvocacyHubButton("Draft ADA Request", onDraftAdaRequest, true) }
-            item { AdvocacyHubButton("Advocacy Resources", onOpenResources, false) }
-            item { AdvocacyHubButton("Boundary Builder", onOpenBoundaryBuilder, true) }
-            item { AdvocacyHubButton("Request Log", onOpenRequestLog, false) }
-            item { AdvocacyHubButton("Disability Benefits Tracker", onOpenBenefitsTracker, true) }
-            item { AdvocacyHubButton("STD/LTD Claims", onOpenStdLtdClaims, true) }
-            item { AdvocacyHubButton("Saved Advocacy Plans", onOpenAdvocacyPlans, false) }
+            if (showAllAdvocacyTools) {
+                item { AdvocacyHubButton("Draft ADA Request", onDraftAdaRequest, true) }
+                item { AdvocacyHubButton("Advocacy Resources", onOpenResources, false) }
+                item { AdvocacyHubButton("Boundary Builder", onOpenBoundaryBuilder, true) }
+                item { AdvocacyHubButton("Request Log", onOpenRequestLog, false) }
+                item { AdvocacyHubButton("Disability Benefits Tracker", onOpenBenefitsTracker, true) }
+                item { AdvocacyHubButton("STD/LTD Claims", onOpenStdLtdClaims, true) }
+                item { AdvocacyHubButton("Saved Advocacy Plans", onOpenAdvocacyPlans, false) }
+                if (isFlareDay) {
+                    item {
+                        TextButton(
+                            onClick = { showAllAdvocacyTools = false },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Show fewer advocacy tools", color = SoftBlushPink)
+                        }
+                    }
+                }
+            } else {
+                item { AdvocacyHubButton("Saved Advocacy Plans", onOpenAdvocacyPlans, false) }
+                item {
+                    TextButton(
+                        onClick = { showAllAdvocacyTools = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Show all advocacy tools", color = SoftBlushPink)
+                    }
+                }
+            }
 
             item {
                 Text(
@@ -166,7 +202,7 @@ fun SpeakStrongScreen(
                             },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = LavenderPurple,
-                                selectedLabelColor = PaleCloudWhite
+                                selectedLabelColor = NightLavender
                             )
                         )
                     }
@@ -188,7 +224,7 @@ fun SpeakStrongScreen(
                             label = { Text(category) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = LavenderPurple,
-                                selectedLabelColor = PaleCloudWhite
+                                selectedLabelColor = NightLavender
                             )
                         )
                     }
@@ -226,7 +262,7 @@ fun SpeakStrongScreen(
                             Text(
                                 script.category,
                                 style = MaterialTheme.typography.labelLarge,
-                                color = if (isFlareDay) SoftBlushPink else LavenderPurple
+                                color = if (isFlareDay) SoftBlushPink else DustyMauve
                             )
                             Text(script.title, style = MaterialTheme.typography.headlineSmall, color = textColor)
                             Text(
@@ -242,7 +278,7 @@ fun SpeakStrongScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = LavenderPurple,
-                                    contentColor = PaleCloudWhite
+                                    contentColor = NightLavender
                                 )
                             ) {
                                 Text("Practice this script")
@@ -265,7 +301,7 @@ private fun AdvocacyHubButton(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (emphasized) LavenderPurple else SoftBlushPink,
-            contentColor = if (emphasized) PaleCloudWhite else DeepFogGrey
+            contentColor = NightLavender
         ),
         modifier = Modifier.fillMaxWidth()
     ) {

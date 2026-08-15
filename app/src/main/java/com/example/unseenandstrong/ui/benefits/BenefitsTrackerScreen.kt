@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,17 +56,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.benefits.BenefitsStageEntity
 import com.example.unseenandstrong.ui.theme.ButterflyGlow
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
+import com.example.unseenandstrong.ui.theme.PaleCloudWhite
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
-import com.example.unseenandstrong.ui.theme.SoftBorderGray
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
+import com.example.unseenandstrong.ui.theme.WarmMistGrey
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -75,7 +80,7 @@ fun BenefitsTrackerScreen(
 ) {
     val stages by viewModel.stages.collectAsState()
     val backgroundColor = if (isFlareDay) NightLavender else SoftCloudGrey
-    val headerTextColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
+    val headerTextColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
     var selectedStage by remember { mutableStateOf<BenefitsStageEntity?>(null) }
 
     val approachingDeadlineStage = remember(stages) {
@@ -98,7 +103,7 @@ fun BenefitsTrackerScreen(
                 onClick = onBackToHub,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SoftBlushPink,
-                    contentColor = DeepFogGrey
+                    contentColor = NightLavender
                 )
             ) {
                 Text("Back to Speak Strong")
@@ -112,12 +117,14 @@ fun BenefitsTrackerScreen(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Navigating this process takes time. Track your journey softly below.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = headerTextColor
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            if (!isFlareDay) {
+                Text(
+                    text = "Navigating this process takes time. Track your journey softly below.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = headerTextColor
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             approachingDeadlineStage?.let { stage ->
                 Card(
@@ -125,14 +132,14 @@ fun BenefitsTrackerScreen(
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = ButterflyGlow.copy(alpha = 0.2f)
+                        containerColor = SoftBlushPink
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = "Gentle reminder: You have paperwork due soon for '${stage.stageName}'. Take it one step at a time.",
                         modifier = Modifier.padding(16.dp),
-                        color = headerTextColor,
+                        color = NightLavender,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -189,12 +196,12 @@ fun JourneyStageItem(
     isFlareDay: Boolean,
     onClick: () -> Unit
 ) {
-    val cardColor = if (isFlareDay) DeepFogGrey else Color.White
-    val textColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
+    val cardColor = if (isFlareDay) NightLavender.copy(alpha = 0.82f) else PaleCloudWhite
+    val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
     val statusColor = when (stage.status) {
-        "Completed" -> LavenderPurple
-        "Active" -> ButterflyGlow
-        else -> SoftBorderGray
+        "Completed" -> ButterflyGlow
+        "Active" -> DustyMauve
+        else -> WarmMistGrey
     }
 
     Row(
@@ -217,8 +224,8 @@ fun JourneyStageItem(
                 if (stage.status == "Completed") {
                     Icon(
                         Icons.Default.Check,
-                        contentDescription = "Completed",
-                        tint = Color.White,
+                        contentDescription = null,
+                        tint = NightLavender,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -264,7 +271,7 @@ fun JourneyStageItem(
                     Text(
                         text = "Deadline: ${formatDeadlineDate(deadline)}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = ButterflyGlow,
+                        color = textColor,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -289,14 +296,17 @@ fun EditStageDialog(
     onDismiss: () -> Unit,
     onSave: (BenefitsStageEntity) -> Unit
 ) {
-    val dialogBg = if (isFlareDay) DeepFogGrey else Color.White
-    val textColor = if (isFlareDay) SoftCloudGrey else DeepFogGrey
+    val dialogBg = if (isFlareDay) NightLavender else PaleCloudWhite
+    val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
     var status by rememberSaveable(stage.id) { mutableStateOf(stage.status) }
     var notes by rememberSaveable(stage.id) { mutableStateOf(stage.notes) }
     var deadlineDate by remember(stage.id, stage.deadlineDate) {
         mutableStateOf(stage.deadlineDate)
     }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showNotes by rememberSaveable(stage.id, isFlareDay) {
+        mutableStateOf(!isFlareDay || stage.notes.isNotBlank())
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -305,17 +315,20 @@ fun EditStageDialog(
             Text(stage.stageName, color = textColor, fontWeight = FontWeight.Bold)
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Text("Update Status", color = textColor)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("Pending", "Active", "Completed").forEach { option ->
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(listOf("Pending", "Active", "Completed")) { option ->
                         FilterChip(
                             selected = status == option,
                             onClick = { status = option },
                             label = { Text(option) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = LavenderPurple,
-                                selectedLabelColor = Color.White
+                                selectedLabelColor = NightLavender
                             )
                         )
                     }
@@ -325,8 +338,8 @@ fun EditStageDialog(
                 Button(
                     onClick = { showDatePicker = true },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = SoftCloudGrey,
-                        contentColor = DeepFogGrey
+                        containerColor = PaleCloudWhite,
+                        contentColor = NightLavender
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -336,7 +349,7 @@ fun EditStageDialog(
                 deadlineDate?.let { selectedDeadline ->
                     Text(
                         text = "Selected: ${formatDeadlineDate(selectedDeadline)}",
-                        color = if (isFlareDay) SoftBlushPink else ButterflyGlow
+                        color = textColor
                     )
                     TextButton(
                         onClick = { deadlineDate = null },
@@ -346,18 +359,27 @@ fun EditStageDialog(
                     }
                 }
 
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Notes", color = textColor) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SoftBlushPink,
-                        unfocusedBorderColor = LavenderPurple,
-                        focusedTextColor = textColor,
-                        unfocusedTextColor = textColor
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (showNotes) {
+                    OutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = { Text("Notes (optional)", color = textColor) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SoftBlushPink,
+                            unfocusedBorderColor = WarmMistGrey,
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    TextButton(
+                        onClick = { showNotes = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add optional notes", color = SoftBlushPink)
+                    }
+                }
             }
         },
         confirmButton = {
@@ -371,9 +393,12 @@ fun EditStageDialog(
                         )
                     )
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = LavenderPurple)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = LavenderPurple,
+                    contentColor = NightLavender
+                )
             ) {
-                Text("Save", color = Color.White)
+                Text("Save")
             }
         },
         dismissButton = {

@@ -27,14 +27,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.unseenandstrong.data.local.advocacy.AdvocacySessionEntity
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
+import com.example.unseenandstrong.ui.theme.DustyMauve
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.NightLavender
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
 import com.example.unseenandstrong.ui.theme.SoftBlushPink
 import com.example.unseenandstrong.ui.theme.SoftCloudGrey
+import com.example.unseenandstrong.ui.theme.WarmMistGrey
 
 @Composable
 fun AdvocacyPreparationScreen(
@@ -53,6 +57,12 @@ fun AdvocacyPreparationScreen(
     var preparationNote by rememberSaveable(session.id) { mutableStateOf(session.preparationNote) }
     var mayNeedFollowUp by rememberSaveable(session.id) { mutableStateOf(session.mayNeedFollowUp) }
     var savedMessage by rememberSaveable(session.id) { mutableStateOf(false) }
+    var showOptionalDetails by rememberSaveable(session.id, isFlareDay) {
+        mutableStateOf(
+            !isFlareDay || personName.isNotBlank() || organization.isNotBlank() ||
+                preparationNote.isNotBlank()
+        )
+    }
 
     fun currentInput() = AdvocacyPreparationInput(
         personName = personName,
@@ -99,17 +109,19 @@ fun AdvocacyPreparationScreen(
                         Text(
                             "${session.scriptCategory} • ${session.selectedTone.lowercase().replaceFirstChar { it.uppercase() }}",
                             style = MaterialTheme.typography.labelLarge,
-                            color = if (isFlareDay) SoftBlushPink else LavenderPurple
+                            color = if (isFlareDay) SoftBlushPink else DustyMauve
                         )
                         Text(session.scriptTextSnapshot, style = MaterialTheme.typography.bodyLarge, color = textColor)
                     }
                 }
             }
-            item {
-                AdvocacyTextField(personName, { personName = it; savedMessage = false }, "Person, if helpful", textColor)
-            }
-            item {
-                AdvocacyTextField(organization, { organization = it; savedMessage = false }, "Organization, if helpful", textColor)
+            if (showOptionalDetails) {
+                item {
+                    AdvocacyTextField(personName, { personName = it; savedMessage = false }, "Person (optional)", textColor)
+                }
+                item {
+                    AdvocacyTextField(organization, { organization = it; savedMessage = false }, "Organization (optional)", textColor)
+                }
             }
             item {
                 AdvocacyTextField(
@@ -127,14 +139,25 @@ fun AdvocacyPreparationScreen(
                     textColor
                 )
             }
-            item {
-                AdvocacyTextField(
-                    preparationNote,
-                    { preparationNote = it; savedMessage = false },
-                    "What do I want to remember?",
-                    textColor,
-                    minLines = 3
-                )
+            if (showOptionalDetails) {
+                item {
+                    AdvocacyTextField(
+                        preparationNote,
+                        { preparationNote = it; savedMessage = false },
+                        "What do I want to remember? (optional)",
+                        textColor,
+                        minLines = 3
+                    )
+                }
+            } else {
+                item {
+                    TextButton(
+                        onClick = { showOptionalDetails = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add optional details", color = SoftBlushPink)
+                    }
+                }
             }
             item {
                 Row(
@@ -150,7 +173,10 @@ fun AdvocacyPreparationScreen(
                     )
                     Switch(
                         checked = mayNeedFollowUp,
-                        onCheckedChange = { mayNeedFollowUp = it; savedMessage = false }
+                        onCheckedChange = { mayNeedFollowUp = it; savedMessage = false },
+                        modifier = Modifier.semantics {
+                            stateDescription = if (mayNeedFollowUp) "On" else "Off"
+                        }
                     )
                 }
             }
@@ -160,7 +186,7 @@ fun AdvocacyPreparationScreen(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = LavenderPurple,
-                        contentColor = PaleCloudWhite
+                        contentColor = NightLavender
                     )
                 ) { Text("Save preparation") }
             }
@@ -179,7 +205,7 @@ fun AdvocacyPreparationScreen(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SoftBlushPink,
-                        contentColor = DeepFogGrey
+                        contentColor = NightLavender
                     )
                 ) { Text("Continue to after-conversation reflection") }
             }
@@ -202,7 +228,7 @@ internal fun AdvocacyTextField(
         minLines = minLines,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = SoftBlushPink,
-            unfocusedBorderColor = LavenderPurple,
+            unfocusedBorderColor = WarmMistGrey,
             focusedTextColor = textColor,
             unfocusedTextColor = textColor,
             focusedLabelColor = textColor,

@@ -1,5 +1,7 @@
 package com.example.unseenandstrong.ui.claims
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,6 +28,8 @@ import com.example.unseenandstrong.data.local.claims.DisabilityClaimTaskEntity
 import com.example.unseenandstrong.ui.theme.DeepFogGrey
 import com.example.unseenandstrong.ui.theme.LavenderPurple
 import com.example.unseenandstrong.ui.theme.PaleCloudWhite
+import com.example.unseenandstrong.ui.theme.SoftBlushPink
+import com.example.unseenandstrong.ui.theme.WarmMistGrey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +43,7 @@ fun ClaimTaskFormDialog(
     val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
     val colors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = LavenderPurple,
-        unfocusedBorderColor = DeepFogGrey,
+        unfocusedBorderColor = WarmMistGrey,
         focusedTextColor = textColor,
         unfocusedTextColor = textColor,
         cursorColor = LavenderPurple
@@ -49,6 +54,9 @@ fun ClaimTaskFormDialog(
     var status by remember { mutableStateOf(existingTask?.status ?: "Not started") }
     var dueDate by remember { mutableStateOf(existingTask?.dueDate) }
     var notes by remember { mutableStateOf(existingTask?.notes ?: "") }
+    var showOptionalDetails by rememberSaveable(existingTask?.id, isFlareDay) {
+        mutableStateOf(!isFlareDay || dueDate != null || notes.isNotBlank())
+    }
 
     val categories = listOf("Form", "Medical documentation", "Employer documentation", "Insurance or administrator", "Phone call", "Appeal", "Other")
     val statuses = listOf("Not started", "In progress", "Submitted", "Complete", "Not needed")
@@ -57,7 +65,10 @@ fun ClaimTaskFormDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (existingTask == null) "Add Task" else "Edit Task", color = textColor) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
@@ -126,16 +137,24 @@ fun ClaimTaskFormDialog(
                     }
                 }
 
-                DatePickerField("Due Date", dueDate, isFlareDay, onDateSelected = { dueDate = it })
-                
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Notes") },
-                    colors = colors,
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 2
-                )
+                if (showOptionalDetails) {
+                    DatePickerField("Due Date", dueDate, isFlareDay, onDateSelected = { dueDate = it })
+                    OutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = { Text("Notes (optional)") },
+                        colors = colors,
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2
+                    )
+                } else {
+                    TextButton(
+                        onClick = { showOptionalDetails = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add due date or notes", color = SoftBlushPink)
+                    }
+                }
             }
         },
         confirmButton = {
@@ -175,7 +194,7 @@ fun ClaimTaskFormDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = DeepFogGrey)
+                Text("Cancel", color = textColor)
             }
         }
     )
