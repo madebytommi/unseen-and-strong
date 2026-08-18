@@ -34,6 +34,8 @@ class SpeakStrongSupportTest {
                 override fun getAllScripts(): Flow<List<ScriptEntity>> = flowOf(scripts)
                 override fun getScriptsByCategory(category: String): Flow<List<ScriptEntity>> =
                     flowOf(scripts.filter { it.category == category })
+                override suspend fun getScriptById(id: Long): ScriptEntity? =
+                    scripts.firstOrNull { it.id == id }
             }
         )
 

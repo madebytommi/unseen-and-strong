@@ -23,6 +23,10 @@ The roadmap is intentionally phased to protect the project from feature bloat. A
 
 # Current Product Status
 
+## v1.0 Release-Candidate Boundary
+
+The v1.0 release-candidate surface is Phase 1 plus Phase 2. Phase 3 medication, cycle, and insights code/data remain internal and deferred from normal top-level navigation. This closeout describes RC readiness only; it does not claim a public release, signed distribution, or physical-device validation.
+
 ## Phase 1 — The Cocoon MVP
 
 **Status: ✅ Complete**
@@ -105,7 +109,7 @@ It is not required for the offline-first Cocoon baseline.
 
 # Phase 2 — Speak Strong
 
-**Status: 🟡 Substantially implemented**
+**Status: ✅ Complete for the v1.0 release-candidate scope**
 
 Original goal:
 
@@ -144,10 +148,10 @@ Most of the originally planned advocacy system now exists.
 
 #### Audio rehearsal
 
-- ⚪ Not yet implemented
-- Should only be retained if it provides meaningful value beyond text rehearsal
+- ⏸ Deferred beyond v1
+- Text rehearsal provides the v1 practice baseline without recording, playback, storage, or microphone-permission scope
 
-Audio rehearsal should **not** block v1 unless it is deliberately restored to the Phase 2 release requirement.
+Audio rehearsal is not a v1 release requirement.
 
 ---
 
@@ -288,18 +292,20 @@ Notifications should remain:
 
 ---
 
-# Remaining Phase 2 Work
+# Phase 2 Closeout
 
-Before Phase 2 is called fully complete:
+The following closeout work is complete for the v1.0 release-candidate scope:
 
 - [x] Add user-controlled local follow-up notifications
-- [ ] Decide whether audio rehearsal belongs in final Phase 2 scope
-- [ ] Complete broader UI and workflow testing
-- [ ] Continue CI hardening
+- [x] Defer audio rehearsal beyond v1; retain text rehearsal as the baseline
+- [x] Complete broader local build, unit-test, instrumentation-compile, lint, and release-build checks
+- [x] Confirm CI workflow covers build, unit, instrumentation-compile, lint, and emulator instrumentation lanes
 - [x] Complete design-system normalization
 - [x] Run accessibility review across advocacy screens
 - [x] Verify Flare Day behavior across every advocacy workflow
 - [x] Remove or resolve stale implementation/documentation inconsistencies
+
+Connected instrumentation still requires a connected emulator or device; no such target was available during this closeout.
 
 ---
 
@@ -311,7 +317,7 @@ Original goal:
 
 > **Data-backed insights to help users understand patterns and communicate with professionals.**
 
-Phase 3 has already begun even though Phase 2 is not formally closed.
+Phase 3 began before Phase 2 was formally closed and remains intentionally internal while the v1.0 RC boundary stays limited to Phase 1 plus Phase 2.
 
 That is acceptable, but Phase 3 should not keep expanding the v1 finish line.
 
@@ -699,7 +705,7 @@ No monetization decision has been finalized.
 
 The project needs a stable finish line.
 
-For the first strong public v1, the recommended boundary is:
+For the v1.0 release candidate, the boundary is:
 
 ## Required for v1
 
@@ -709,16 +715,18 @@ For the first strong public v1, the recommended boundary is:
 
 ### Phase 2
 
-Complete the remaining release-quality work:
+The release-quality closeout is complete for the RC scope:
 
 - [x] Local follow-up notifications
-- [ ] Final decision on audio rehearsal
-- [ ] Final testing
-- [ ] CI hardening
+- [x] Audio rehearsal deferred beyond v1; text rehearsal retained as the baseline
+- [x] Final local build, unit-test, instrumentation-compile, lint, and release-build checks
+- [x] CI workflow and emulator instrumentation lane reviewed
 - [x] Accessibility pass
 - [x] Design-system normalization
-- [ ] Documentation cleanup
-- [ ] Release configuration / packaging review
+- [x] Documentation cleanup
+- [x] Release configuration / packaging review
+
+Public distribution remains a separate step requiring release signing, artifact review, and physical-device validation.
 
 ### Phase 3
 
@@ -788,7 +796,7 @@ If a feature does not meaningfully support one of those goals, it probably does 
 | Phase | Name | Current status |
 |---|---|---|
 | Phase 1 | The Cocoon MVP | ✅ Complete |
-| Phase 2 | Speak Strong | 🟡 Substantially implemented |
+| Phase 2 | Speak Strong | ✅ Complete for v1.0 RC |
 | Phase 3 | Medical Intelligence | 🟠 Early / in progress |
 | Phase 4 | The Care Closet | 🚫 Outside current v1 scope |
 | Phase 5 | Flight Expansion | 🚫 Outside current v1 scope |
@@ -796,4 +804,4 @@ If a feature does not meaningfully support one of those goals, it probably does 
 
 The immediate goal is **not** to begin Phase 4.
 
-The immediate goal is to turn the current application into a stable, coherent **v1.0**, then continue Phase 3 deliberately.
+The current application has been assessed as a stable, coherent **v1.0 RC**. Continue Phase 3 deliberately after the separate public-distribution steps.

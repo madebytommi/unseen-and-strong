@@ -239,6 +239,8 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf(HomeScreen.CheckIn)
             }
             var selectedClaimId by rememberSaveable { mutableStateOf<Long?>(null) }
+            var selectedScriptId by rememberSaveable { mutableStateOf<Long?>(null) }
+            var selectedSessionId by rememberSaveable { mutableStateOf<Long?>(null) }
             var pendingVaultDocumentUri by rememberSaveable { mutableStateOf<String?>(null) }
             val isFlareDay by appViewModel.isFlareDayActive.collectAsState()
             val routineTasks by routineViewModel.tasks.collectAsState()
@@ -251,6 +253,24 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(currentScreen, selectedClaimId) {
                 if (currentScreen == HomeScreen.ClaimDetail || currentScreen == HomeScreen.ClaimForm) {
                     disabilityClaimViewModel.selectClaim(selectedClaimId)
+                }
+            }
+
+            LaunchedEffect(selectedScriptId) {
+                val scriptId = selectedScriptId ?: return@LaunchedEffect
+                database.scriptDao().getScriptById(scriptId)?.let { script ->
+                    if (selectedScript?.id != script.id) {
+                        speakStrongViewModel.selectScript(script)
+                    }
+                }
+            }
+
+            LaunchedEffect(selectedSessionId, advocacySessions) {
+                val sessionId = selectedSessionId ?: return@LaunchedEffect
+                advocacySessions.firstOrNull { it.id == sessionId }?.let { session ->
+                    if (selectedSession?.id != session.id) {
+                        advocacySupportViewModel.selectSession(session.id)
+                    }
                 }
             }
 
@@ -334,7 +354,8 @@ class MainActivity : ComponentActivity() {
                                     onOpenAdvocacyPlans = {
                                         currentScreen = HomeScreen.AdvocacyPlans
                                     },
-                                    onOpenScript = {
+                                    onOpenScript = { script ->
+                                        selectedScriptId = script.id
                                         currentScreen = HomeScreen.Rehearsal
                                     }
                                 )
@@ -362,7 +383,8 @@ class MainActivity : ComponentActivity() {
                                                     script = script,
                                                     tone = selectedTone,
                                                     scriptText = scriptText,
-                                                    onCreated = {
+                                                    onCreated = { sessionId ->
+                                                        selectedSessionId = sessionId
                                                         currentScreen = HomeScreen.AdvocacyPreparation
                                                     }
                                                 )
@@ -377,10 +399,12 @@ class MainActivity : ComponentActivity() {
                                         currentScreen = HomeScreen.SpeakStrong
                                     },
                                     onOpenPreparation = { id ->
+                                        selectedSessionId = id
                                         advocacySupportViewModel.selectSession(id)
                                         currentScreen = HomeScreen.AdvocacyPreparation
                                     },
                                     onOpenReflection = { id ->
+                                        selectedSessionId = id
                                         advocacySupportViewModel.selectSession(id)
                                         currentScreen = HomeScreen.AdvocacyReflection
                                     }

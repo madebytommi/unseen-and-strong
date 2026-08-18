@@ -79,25 +79,25 @@ fun ClaimFormScreen(
         cursorColor = LavenderPurple
     )
 
-    var claimType by remember(claim?.id) { mutableStateOf(claim?.claimType ?: "STD") }
-    var employerName by remember(claim?.id) { mutableStateOf(claim?.employerName ?: "") }
-    var administratorName by remember(claim?.id) { mutableStateOf(claim?.administratorName ?: "") }
-    var claimNumber by remember(claim?.id) { mutableStateOf(claim?.claimNumber ?: "") }
-    var status by remember(claim?.id) { mutableStateOf(claim?.status ?: "Preparing") }
+    var claimType by rememberSaveable(claim?.id) { mutableStateOf(claim?.claimType ?: "STD") }
+    var employerName by rememberSaveable(claim?.id) { mutableStateOf(claim?.employerName ?: "") }
+    var administratorName by rememberSaveable(claim?.id) { mutableStateOf(claim?.administratorName ?: "") }
+    var claimNumber by rememberSaveable(claim?.id) { mutableStateOf(claim?.claimNumber ?: "") }
+    var status by rememberSaveable(claim?.id) { mutableStateOf(claim?.status ?: "Preparing") }
     
-    var filedDate by remember(claim?.id) { mutableStateOf(claim?.filedDate) }
-    var leaveStartDate by remember(claim?.id) { mutableStateOf(claim?.leaveStartDate) }
-    var leaveEndDate by remember(claim?.id) { mutableStateOf(claim?.leaveEndDate) }
-    var benefitStartDate by remember(claim?.id) { mutableStateOf(claim?.benefitStartDate) }
-    var benefitEndDate by remember(claim?.id) { mutableStateOf(claim?.benefitEndDate) }
-    var decisionDate by remember(claim?.id) { mutableStateOf(claim?.decisionDate) }
-    var appealDeadline by remember(claim?.id) { mutableStateOf(claim?.appealDeadline) }
+    var filedDate by rememberSaveable(claim?.id) { mutableStateOf(claim?.filedDate) }
+    var leaveStartDate by rememberSaveable(claim?.id) { mutableStateOf(claim?.leaveStartDate) }
+    var leaveEndDate by rememberSaveable(claim?.id) { mutableStateOf(claim?.leaveEndDate) }
+    var benefitStartDate by rememberSaveable(claim?.id) { mutableStateOf(claim?.benefitStartDate) }
+    var benefitEndDate by rememberSaveable(claim?.id) { mutableStateOf(claim?.benefitEndDate) }
+    var decisionDate by rememberSaveable(claim?.id) { mutableStateOf(claim?.decisionDate) }
+    var appealDeadline by rememberSaveable(claim?.id) { mutableStateOf(claim?.appealDeadline) }
     
-    var nextAction by remember(claim?.id) { mutableStateOf(claim?.nextAction ?: "") }
-    var nextActionDueDate by remember(claim?.id) { mutableStateOf(claim?.nextActionDueDate) }
+    var nextAction by rememberSaveable(claim?.id) { mutableStateOf(claim?.nextAction ?: "") }
+    var nextActionDueDate by rememberSaveable(claim?.id) { mutableStateOf(claim?.nextActionDueDate) }
     
-    var notes by remember(claim?.id) { mutableStateOf(claim?.notes ?: "") }
-    var enableRequestLog by remember(claim?.id) { mutableStateOf(claim?.linkedRequestId != null) }
+    var notes by rememberSaveable(claim?.id) { mutableStateOf(claim?.notes ?: "") }
+    var enableRequestLog by rememberSaveable(claim?.id) { mutableStateOf(claim?.linkedRequestId != null) }
     val hasAdditionalDetails = claim?.let {
         it.administratorName.isNotBlank() || it.claimNumber.isNotBlank() ||
             listOf(

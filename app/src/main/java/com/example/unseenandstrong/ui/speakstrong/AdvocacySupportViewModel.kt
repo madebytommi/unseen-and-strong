@@ -78,7 +78,7 @@ class AdvocacySupportViewModel(
         script: ScriptEntity,
         tone: SpeakStrongViewModel.Tone,
         scriptText: String,
-        onCreated: () -> Unit
+        onCreated: (Long) -> Unit
     ) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
@@ -94,7 +94,7 @@ class AdvocacySupportViewModel(
                 )
             )
             selectedSessionId.value = id
-            onCreated()
+            onCreated(id)
         }
     }
 

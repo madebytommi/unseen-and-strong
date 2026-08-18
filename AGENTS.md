@@ -45,7 +45,7 @@ This file controls repository implementation conventions. If it conflicts with a
 
 ## Product and phase boundaries
 
-- Treat `docs/BUILD_PHASES.md` as the canonical roadmap: Phase 1 is complete, Phase 2 is substantially implemented, and Phase 3 is underway.
+- Treat `docs/BUILD_PHASES.md` as the canonical roadmap: Phase 1 is complete, Phase 2 is complete for the v1.0 release-candidate scope, and Phase 3 is underway but internal/deferred from normal v1 navigation.
 - Protect the current v1 finish line. Do not pull Phase 4 or Phase 5 features into active work unless the user explicitly requests that scope.
 - Care Closet and commerce work belongs to Phase 4. Cloud sync, community features, and advanced AI belong to Phase 5.
 - Do not turn a later-phase idea into an implementation dependency for existing offline features.

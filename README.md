@@ -12,7 +12,7 @@ Unseen and Strong is intentionally low-pressure: no streak shame, no punitive re
 
 ## Current status
 
-Phase 1 is the completed revised MVP baseline. Phase 2 advocacy tools are substantially implemented but not complete. Early Phase 3 medication and cycle foundations exist internally, but those screens are not part of the normal v1 top-level navigation.
+Phase 1 and Phase 2 form the v1.0 release-candidate surface. Phase 2 text-based advocacy, local follow-up reminders, design/accessibility review, and closeout checks are complete for v1; audio rehearsal is deferred. Early Phase 3 medication, cycle, and insights foundations remain internal and are not part of normal v1 top-level navigation. This is an RC assessment, not a public release or signed distribution claim.
 
 ## Phase 1 — The Cocoon MVP
 
@@ -54,7 +54,7 @@ Moved out of Phase 1:
 
 ## Phase 2 — Speak Strong / Advocacy
 
-Status: substantially implemented, not complete.
+Status: complete for the v1.0 release-candidate scope.
 
 Currently implemented and accessible:
 
@@ -76,10 +76,9 @@ Currently implemented and accessible:
 - Dedicated STD/LTD claim workflows with checklists and Interaction/Document linking
 - Default-off local notifications for advocacy follow-ups, benefits deadlines, and STD/LTD claim dates
 
-Still needed before Phase 2 can be called complete:
+Audio rehearsal is intentionally deferred beyond v1. Text rehearsal meets the v1 advocacy baseline. The v1.0 surface is Phase 1 plus Phase 2; Phase 3 remains internal/deferred.
 
-- Audio-based rehearsal or recording, if retained in the final Phase 2 scope
-- Broader final testing and CI hardening
+Public distribution still requires a deliberate signing setup, release artifact review, and physical-device validation.
 
 ## Phase 3 — Medical Intelligence
 

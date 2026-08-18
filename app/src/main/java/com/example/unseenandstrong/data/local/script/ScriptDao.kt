@@ -17,6 +17,8 @@ interface ScriptDao {
 
     @Query("SELECT * FROM scripts WHERE category = :category ORDER BY title ASC")
     fun getScriptsByCategory(category: String): Flow<List<ScriptEntity>>
-}
 
+    @Query("SELECT * FROM scripts WHERE id = :id LIMIT 1")
+    suspend fun getScriptById(id: Long): ScriptEntity?
+}
 
