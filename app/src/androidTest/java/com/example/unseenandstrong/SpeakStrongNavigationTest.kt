@@ -13,12 +13,30 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 class SpeakStrongNavigationTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun setUp() {
+        resetFlareDayPreference()
+    }
+
+    @After
+    fun tearDown() {
+        resetFlareDayPreference()
+    }
+
+    private fun resetFlareDayPreference() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        FlareDayPreferences(context).isEnabled = false
+    }
 
     @Test
     fun allSpeakStrongChildDestinationsKeepSpeakStrongSelected() {
@@ -82,6 +100,9 @@ class SpeakStrongNavigationTest {
         composeRule.onNodeWithText("Advocacy Resources").assertExists()
         composeRule.onNodeWithText("Request Log").assertExists()
         composeRule.onNodeWithText("STD/LTD Claims").assertExists()
+
+        composeRule.onNode(isToggleable() and hasStateDescription("On")).performClick()
+        composeRule.waitForIdle()
     }
 
     private fun openHubDestination(label: String) {

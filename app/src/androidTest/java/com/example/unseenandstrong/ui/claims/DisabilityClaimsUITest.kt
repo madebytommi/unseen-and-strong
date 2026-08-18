@@ -1,17 +1,20 @@
 package com.example.unseenandstrong.ui.claims
 
-import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.example.unseenandstrong.FlareDayPreferences
 import com.example.unseenandstrong.MainActivity
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,6 +25,21 @@ class DisabilityClaimsUITest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
+    @Before
+    fun setUp() {
+        resetFlareDayPreference()
+    }
+
+    @After
+    fun tearDown() {
+        resetFlareDayPreference()
+    }
+
+    private fun resetFlareDayPreference() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        FlareDayPreferences(context).isEnabled = false
+    }
+
     @Test
     fun testNavigationToClaimsAndBasicFlow() {
         // First navigate to Speak Strong tab
@@ -29,10 +47,7 @@ class DisabilityClaimsUITest {
         composeTestRule.waitForIdle()
 
         // From Hub, click STD/LTD Claims
-        composeTestRule.onNode(
-            hasScrollAction() and 
-            hasAnyDescendant(hasText("Choose the support that fits the conversation in front of you."))
-        ).performScrollToNode(hasText("STD/LTD Claims"))
+        composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("STD/LTD Claims"))
         composeTestRule.onNodeWithText("STD/LTD Claims").performClick()
         composeTestRule.waitForIdle()
 
@@ -128,10 +143,7 @@ class DisabilityClaimsUITest {
     private fun openClaims() {
         composeTestRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNode(
-            hasScrollAction() and
-                hasAnyDescendant(hasText("Choose the support that fits the conversation in front of you."))
-        ).performScrollToNode(hasText("STD/LTD Claims"))
+        composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("STD/LTD Claims"))
         composeTestRule.onNodeWithText("STD/LTD Claims").performClick()
         composeTestRule.waitForIdle()
     }
