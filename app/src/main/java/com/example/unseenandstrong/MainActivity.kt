@@ -239,6 +239,7 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf(HomeScreen.CheckIn)
             }
             var selectedClaimId by rememberSaveable { mutableStateOf<Long?>(null) }
+            var pendingVaultDocumentUri by rememberSaveable { mutableStateOf<String?>(null) }
             val isFlareDay by appViewModel.isFlareDayActive.collectAsState()
             val routineTasks by routineViewModel.tasks.collectAsState()
             val selectedTone by speakStrongViewModel.selectedTone.collectAsState()
@@ -484,7 +485,9 @@ class MainActivity : ComponentActivity() {
                                 )
                                 HomeScreen.Vault -> VaultScreen(
                                     viewModel = vaultViewModel,
-                                    isFlareDay = isFlareDay
+                                    isFlareDay = isFlareDay,
+                                    documentUriToOpen = pendingVaultDocumentUri,
+                                    onDocumentOpenHandled = { pendingVaultDocumentUri = null }
                                 )
                                 HomeScreen.StdLtdClaimsList -> com.example.unseenandstrong.ui.claims.StdLtdClaimsListScreen(
                                     viewModel = disabilityClaimViewModel,
@@ -519,7 +522,8 @@ class MainActivity : ComponentActivity() {
                                     onOpenInteraction = {
                                         currentScreen = HomeScreen.Log
                                     },
-                                    onOpenDocument = {
+                                    onOpenDocument = { document ->
+                                        pendingVaultDocumentUri = document.fileUri
                                         currentScreen = HomeScreen.Vault
                                     }
                                 )

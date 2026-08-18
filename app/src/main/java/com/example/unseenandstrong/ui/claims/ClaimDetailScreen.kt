@@ -67,7 +67,7 @@ fun ClaimDetailScreen(
     onLinkInteraction: () -> Unit,
     onLinkDocument: () -> Unit,
     onOpenInteraction: (Long) -> Unit,
-    onOpenDocument: (Long) -> Unit
+    onOpenDocument: (VaultDocumentEntity) -> Unit
 ) {
     val claim by viewModel.selectedClaim.collectAsState()
     val tasks by viewModel.claimTasks.collectAsState()
@@ -354,7 +354,7 @@ fun ClaimDetailScreen(
                                 .padding(vertical = 4.dp)
                                 .clickable(
                                     onClickLabel = "Open linked document",
-                                    onClick = { onOpenDocument(doc.id) }
+                                    onClick = { onOpenDocument(doc) }
                                 )
                         ) {
                             Text(

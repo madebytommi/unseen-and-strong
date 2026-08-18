@@ -93,26 +93,31 @@ abstract class UnseenDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): UnseenDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    UnseenDatabase::class.java,
-                    "unseen_database"
-                )
-                    .addMigrations(
-                        MIGRATION_6_7,
-                        MIGRATION_7_8,
-                        MIGRATION_8_9,
-                        MIGRATION_9_10,
-                        MIGRATION_10_11,
-                        MIGRATION_11_12,
-                        MIGRATION_12_13,
-                        MIGRATION_13_14
-                    )
-                    .addCallback(SEED_SCRIPTS_CALLBACK)
-                    .build()
+                val instance = openDatabase(context, "unseen_database")
                 INSTANCE = instance
                 instance
             }
+        }
+
+        /** Builds the same configured Room database used by production for migration tests. */
+        internal fun openDatabase(context: Context, name: String): UnseenDatabase {
+            return Room.databaseBuilder(
+                context.applicationContext,
+                UnseenDatabase::class.java,
+                name
+            )
+                .addMigrations(
+                    MIGRATION_6_7,
+                    MIGRATION_7_8,
+                    MIGRATION_8_9,
+                    MIGRATION_9_10,
+                    MIGRATION_10_11,
+                    MIGRATION_11_12,
+                    MIGRATION_12_13,
+                    MIGRATION_13_14
+                )
+                .addCallback(SEED_SCRIPTS_CALLBACK)
+                .build()
         }
 
         private val MIGRATION_6_7 = object : Migration(6, 7) {

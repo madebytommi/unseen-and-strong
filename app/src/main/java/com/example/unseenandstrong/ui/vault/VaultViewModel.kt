@@ -42,7 +42,7 @@ class VaultViewModel(
 
     fun deleteDocument(document: VaultDocumentEntity) {
         viewModelScope.launch {
-            vaultDocumentDao.deleteDocument(document)
+            vaultDocumentDao.deleteDocumentAndLinks(document)
         }
     }
 
@@ -58,4 +58,3 @@ class VaultViewModel(
         }
     }
 }
-

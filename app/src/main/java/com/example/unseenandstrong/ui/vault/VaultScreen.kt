@@ -2,7 +2,6 @@ package com.example.unseenandstrong.ui.vault
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -32,9 +32,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -60,34 +64,63 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun VaultScreen(
     viewModel: VaultViewModel,
-    isFlareDay: Boolean = false
+    isFlareDay: Boolean = false,
+    documentUriToOpen: String? = null,
+    onDocumentOpenHandled: () -> Unit = {}
 ) {
     val documents by viewModel.documents.collectAsState()
+    val context = LocalContext.current
     val backgroundColor = if (isFlareDay) NightLavender else SoftCloudGrey
     val textColor = if (isFlareDay) PaleCloudWhite else DeepFogGrey
     val cardColor = if (isFlareDay) NightLavender.copy(alpha = 0.82f) else SoftCloudGrey
 
     var showSaveDialog by remember { mutableStateOf(false) }
+    var documentPendingDeletion by remember { mutableStateOf<VaultDocumentEntity?>(null) }
     var selectedUri by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
+    LaunchedEffect(pendingMessage) {
+        pendingMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            pendingMessage = null
+        }
+    }
+
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
-            selectedUri = uri.toString()
-            showSaveDialog = true
+            when (persistVaultReadPermission(context.contentResolver, uri)) {
+                VaultDocumentPersistence.PERSISTED -> {
+                    selectedUri = uri.toString()
+                    showSaveDialog = true
+                }
+                VaultDocumentPersistence.UNAVAILABLE -> {
+                    pendingMessage =
+                        "This source could not provide lasting read access. Nothing was saved. Try choosing the file from a device document provider."
+                }
+            }
         }
+    }
+
+    LaunchedEffect(documentUriToOpen) {
+        val rawUri = documentUriToOpen ?: return@LaunchedEffect
+        val result = openVaultDocument(context, rawUri)
+        vaultDocumentOpenMessage(result)?.let { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+        onDocumentOpenHandled()
     }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = backgroundColor,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    photoPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
+                    documentPickerLauncher.launch(arrayOf("image/*"))
                 },
                 containerColor = LavenderPurple,
                 contentColor = NightLavender
@@ -136,7 +169,13 @@ fun VaultScreen(
                             textColor = textColor,
                             backgroundColor = cardColor,
                             showSecondaryMetadata = !isFlareDay,
-                            onDelete = { viewModel.deleteDocument(document) }
+                            onOpen = {
+                                val result = openVaultDocument(context, document.fileUri)
+                                vaultDocumentOpenMessage(result)?.let { message ->
+                                    pendingMessage = message
+                                }
+                            },
+                            onDelete = { documentPendingDeletion = document }
                         )
                     }
                 }
@@ -163,6 +202,45 @@ fun VaultScreen(
             }
         )
     }
+
+    documentPendingDeletion?.let { document ->
+        AlertDialog(
+            onDismissRequest = { documentPendingDeletion = null },
+            title = { Text("Delete document?", color = textColor) },
+            text = {
+                Text(
+                    text = "Remove \"${document.title.ifBlank { "document" }}\" from your Vault? The original file will stay where it is.",
+                    color = textColor
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        documentPendingDeletion = null
+                        viewModel.deleteDocument(document)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { documentPendingDeletion = null },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SoftBlushPink,
+                        contentColor = NightLavender
+                    )
+                ) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = if (isFlareDay) NightLavender else PaleCloudWhite
+        )
+    }
 }
 
 @Composable
@@ -171,6 +249,7 @@ private fun VaultDocumentCard(
     textColor: Color,
     backgroundColor: Color,
     showSecondaryMetadata: Boolean,
+    onOpen: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -189,7 +268,9 @@ private fun VaultDocumentCard(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClickLabel = "Open document", onClick = onOpen)
                 ) {
                     Icon(
                         imageVector = categoryIcon(document.category),
@@ -213,6 +294,13 @@ private fun VaultDocumentCard(
                     }
                 }
 
+                IconButton(onClick = onOpen) {
+                    Icon(
+                        imageVector = Icons.Default.Description,
+                        contentDescription = "Open ${document.title.ifBlank { "document" }}",
+                        tint = textColor
+                    )
+                }
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -230,7 +318,7 @@ private fun VaultDocumentCard(
                 )
 
                 Text(
-                    text = document.fileUri,
+                    text = "Stored locally • Tap the document to open it",
                     style = MaterialTheme.typography.labelSmall,
                     color = textColor.copy(alpha = 0.78f)
                 )

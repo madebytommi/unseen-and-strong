@@ -158,4 +158,26 @@ class DisabilityClaimDaoTest {
         val allDocs = db.vaultDocumentDao().getAllDocuments().first()
         assertEquals(1, allDocs.size)
     }
+
+    @Test
+    fun deletingVaultDocumentRemovesItsLinkButPreservesClaim() = runBlocking {
+        val claimId = claimDao.insertClaim(DisabilityClaimEntity(claimType = "STD"))
+        val documentId = db.vaultDocumentDao().insertDocument(
+            VaultDocumentEntity(
+                title = "Appeal letter",
+                category = "Insurance",
+                fileUri = "content://documents/appeal",
+                dateAdded = 0
+            )
+        )
+        claimDao.linkDocument(ClaimDocumentCrossRef(claimId, documentId))
+
+        val document = db.vaultDocumentDao().getDocument(documentId)
+        assertNotNull(document)
+        db.vaultDocumentDao().deleteDocumentAndLinks(requireNotNull(document))
+
+        assertNotNull(claimDao.getClaim(claimId))
+        assertTrue(claimDao.observeLinkedDocuments(claimId).first().isEmpty())
+        assertTrue(db.vaultDocumentDao().getAllDocuments().first().isEmpty())
+    }
 }
