@@ -113,6 +113,22 @@ class DisabilityClaimViewModelTest {
     }
 
     @Test
+    fun selectingPersistedClaimIdRestoresClaimAndMissingIdClearsSelection() = runBlocking {
+        val persistedId = db.disabilityClaimDao().insertClaim(
+            DisabilityClaimEntity(claimType = "LTD", status = "Submitted")
+        )
+
+        viewModel.selectClaim(persistedId)
+        val selected = viewModel.selectedClaim.first { it?.id == persistedId }
+        assertEquals(persistedId, selected?.id)
+        assertEquals("LTD", selected?.claimType)
+
+        viewModel.selectClaim(persistedId + 9999L)
+        val missing = viewModel.selectedClaim.first { it == null }
+        assertNull(missing)
+    }
+
+    @Test
     fun replacementRequiresExplicitSelection() = runBlocking {
         // Step 1: Claim has a missing/stale linkedRequestId
         val claimWithStaleId = DisabilityClaimEntity(claimType = "STD", status = "Preparing", linkedRequestId = 999L)

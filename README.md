@@ -12,7 +12,7 @@ Unseen and Strong is intentionally low-pressure: no streak shame, no punitive re
 
 ## Current status
 
-Phase 1 is the completed revised MVP baseline. Phase 2 advocacy tools are substantially implemented but not complete. Early Phase 3 work has begun with medication and cycle tracking.
+Phase 1 is the completed revised MVP baseline. Phase 2 advocacy tools are substantially implemented but not complete. Early Phase 3 medication and cycle foundations exist internally, but those screens are not part of the normal v1 top-level navigation.
 
 ## Phase 1 — The Cocoon MVP
 

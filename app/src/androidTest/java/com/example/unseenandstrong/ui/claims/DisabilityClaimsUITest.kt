@@ -6,6 +6,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -68,15 +69,15 @@ class DisabilityClaimsUITest {
         composeTestRule.onNodeWithText("Claim Details").assertExists()
         
         // Verify Edit button exists
-        composeTestRule.onNodeWithContentDescription("Edit Claim").assertExists()
+        composeTestRule.onNodeWithContentDescription("Edit claim").assertExists()
         
         // Add Task
-        composeTestRule.onNodeWithContentDescription("Add Task").performClick()
+        composeTestRule.onNodeWithContentDescription("Add task").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Cancel").performClick() // just close dialog
         
         // Link Interaction
-        composeTestRule.onNodeWithContentDescription("Link Interaction").performClick()
+        composeTestRule.onNodeWithContentDescription("Link interaction").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Close").performClick()
         
@@ -94,5 +95,50 @@ class DisabilityClaimsUITest {
         composeTestRule.onNodeWithContentDescription("Back to Speak Strong").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Draft ADA Request").assertExists()
+    }
+
+    @Test
+    fun editingClaimRestoresSelectedClaimAfterRecreation() {
+        openClaims()
+
+        composeTestRule.onNodeWithText("Add New Claim").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("Save Claim"))
+        composeTestRule.onNodeWithText("Save Claim").performClick()
+        waitForText("Preparing")
+
+        composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("Preparing"))
+        composeTestRule.onNodeWithText("Preparing").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithContentDescription("Edit claim").performClick()
+        waitForText("Edit Claim")
+
+        composeTestRule.activityRule.scenario.recreate()
+        waitForText("Edit Claim")
+        composeTestRule.onNodeWithContentDescription("Cancel").performClick()
+        waitForText("Claim Details")
+
+        composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("Delete Claim"))
+        composeTestRule.onNodeWithText("Delete Claim").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Delete").performClick()
+        composeTestRule.waitForIdle()
+    }
+
+    private fun openClaims() {
+        composeTestRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNode(
+            hasScrollAction() and
+                hasAnyDescendant(hasText("Choose the support that fits the conversation in front of you."))
+        ).performScrollToNode(hasText("STD/LTD Claims"))
+        composeTestRule.onNodeWithText("STD/LTD Claims").performClick()
+        composeTestRule.waitForIdle()
+    }
+
+    private fun waitForText(text: String) {
+        composeTestRule.waitUntil(timeoutMillis = 10_000) {
+            composeTestRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 }

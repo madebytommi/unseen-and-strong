@@ -88,7 +88,31 @@ fun ClaimDetailScreen(
     var showLinkDocumentDialog by remember { mutableStateOf(false) }
 
     if (claim == null) {
-        // Handle gracefully
+        Surface(modifier = Modifier.fillMaxSize(), color = backgroundColor) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Unable to open this claim.",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = textColor
+                )
+                Button(
+                    onClick = onBackToClaims,
+                    modifier = Modifier.padding(top = 16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LavenderPurple,
+                        contentColor = NightLavender
+                    )
+                ) {
+                    Text("Back to claims")
+                }
+            }
+        }
         return
     }
 

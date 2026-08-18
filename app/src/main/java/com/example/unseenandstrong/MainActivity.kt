@@ -34,10 +34,12 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -119,7 +121,12 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
-    private val appViewModel by lazy { ViewModelProvider(this)[AppViewModel::class.java] }
+    private val appViewModel by lazy {
+        ViewModelProvider(
+            this,
+            AppViewModel.Factory(FlareDayPreferences(applicationContext))
+        )[AppViewModel::class.java]
+    }
     private val checkInViewModel by lazy {
         ViewModelProvider(
             this,
@@ -228,7 +235,10 @@ class MainActivity : ComponentActivity() {
         restoreFollowUpReminderState()
         enableEdgeToEdge()
         setContent {
-            var currentScreen by rememberSaveable { mutableStateOf(HomeScreen.CheckIn) }
+            var currentScreen by rememberSaveable(stateSaver = HomeScreenSaver) {
+                mutableStateOf(HomeScreen.CheckIn)
+            }
+            var selectedClaimId by rememberSaveable { mutableStateOf<Long?>(null) }
             val isFlareDay by appViewModel.isFlareDayActive.collectAsState()
             val routineTasks by routineViewModel.tasks.collectAsState()
             val selectedTone by speakStrongViewModel.selectedTone.collectAsState()
@@ -236,6 +246,12 @@ class MainActivity : ComponentActivity() {
             val advocacySessions by advocacySupportViewModel.sessions.collectAsState()
             val selectedSession by advocacySupportViewModel.selectedSession.collectAsState()
             val background = if (isFlareDay) NightLavender else SoftCloudGrey
+
+            LaunchedEffect(currentScreen, selectedClaimId) {
+                if (currentScreen == HomeScreen.ClaimDetail || currentScreen == HomeScreen.ClaimForm) {
+                    disabilityClaimViewModel.selectClaim(selectedClaimId)
+                }
+            }
 
             UnseenAndStrongTheme(isFlareDay = isFlareDay) {
                 Scaffold(
@@ -477,10 +493,12 @@ class MainActivity : ComponentActivity() {
                                         currentScreen = HomeScreen.SpeakStrong
                                     },
                                     onOpenClaim = { id ->
+                                        selectedClaimId = id
                                         disabilityClaimViewModel.selectClaim(id)
                                         currentScreen = HomeScreen.ClaimDetail
                                     },
                                     onAddClaim = {
+                                        selectedClaimId = null
                                         disabilityClaimViewModel.selectClaim(null)
                                         currentScreen = HomeScreen.ClaimForm
                                     }
@@ -492,6 +510,7 @@ class MainActivity : ComponentActivity() {
                                         currentScreen = HomeScreen.StdLtdClaimsList
                                     },
                                     onEditClaim = { id ->
+                                        selectedClaimId = id
                                         disabilityClaimViewModel.selectClaim(id)
                                         currentScreen = HomeScreen.ClaimForm
                                     },
@@ -514,7 +533,11 @@ class MainActivity : ComponentActivity() {
                                             currentScreen = HomeScreen.StdLtdClaimsList
                                         },
                                         onCancel = {
-                                            currentScreen = if (claimToEdit == null) HomeScreen.StdLtdClaimsList else HomeScreen.ClaimDetail
+                                            currentScreen = if (selectedClaimId == null) {
+                                                HomeScreen.StdLtdClaimsList
+                                            } else {
+                                                HomeScreen.ClaimDetail
+                                            }
                                         }
                                     )
                                 }
@@ -683,6 +706,16 @@ private enum class HomeScreen {
         }
 }
 
+private val HomeScreenSaver = Saver<HomeScreen, String>(
+    save = { screen -> screen.name },
+    restore = { savedName ->
+        HomeScreen.entries
+            .firstOrNull { it.name == savedName }
+            ?.takeUnless { it == HomeScreen.Meds || it == HomeScreen.Cycle }
+            ?: HomeScreen.CheckIn
+    }
+)
+
 @Composable
 private fun BottomNavigationBar(
     currentScreen: HomeScreen,
@@ -694,8 +727,6 @@ private fun BottomNavigationBar(
         HomeScreen.ComfortBox,
         HomeScreen.Journal,
         HomeScreen.Routine,
-        HomeScreen.Meds,
-        HomeScreen.Cycle,
         HomeScreen.SpeakStrong,
         HomeScreen.Log,
         HomeScreen.Vault

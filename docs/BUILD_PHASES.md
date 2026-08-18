@@ -315,6 +315,8 @@ Phase 3 has already begun even though Phase 2 is not formally closed.
 
 That is acceptable, but Phase 3 should not keep expanding the v1 finish line.
 
+Medication and cycle foundations remain available in the codebase, but their screens are intentionally omitted from normal v1 top-level navigation while this phase is incomplete. The Insights screen remains internal without a top-level navigation entry.
+
 ---
 
 # Advanced Medication Tracker
