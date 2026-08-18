@@ -108,7 +108,9 @@ class SpeakStrongNavigationTest {
         composeRule.onNodeWithText("Advocacy Resources").assertExists()
         composeRule.onNodeWithText("Request Log").assertExists()
         composeRule.onNodeWithText("STD/LTD Claims").assertExists()
+        scrollHubTo("Interaction Log")
         composeRule.onNodeWithText("Interaction Log").assertExists()
+        scrollHubTo("Document Vault")
         composeRule.onNodeWithText("Document Vault").assertExists()
 
         composeRule.onNode(isToggleable() and hasStateDescription("On")).performClick()
