@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Favorite
@@ -66,6 +67,7 @@ fun VaultScreen(
     viewModel: VaultViewModel,
     isFlareDay: Boolean = false,
     documentUriToOpen: String? = null,
+    onBackToHub: (() -> Unit)? = null,
     onDocumentOpenHandled: () -> Unit = {}
 ) {
     val documents by viewModel.documents.collectAsState()
@@ -138,45 +140,70 @@ fun VaultScreen(
                 .padding(paddingValues),
             color = backgroundColor
         ) {
-            if (documents.isEmpty()) {
-                Column(
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.Center
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
+                    if (onBackToHub != null) {
+                        IconButton(onClick = onBackToHub) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back to Speak Strong",
+                                tint = textColor
+                            )
+                        }
+                    }
                     Text(
-                        text = "No documents saved yet.",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = textColor
-                    )
-                    Text(
-                        text = "Tap the + button to add a medical, insurance, or work document.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = textColor
+                        text = "Document Vault",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = textColor,
+                        modifier = Modifier.padding(start = if (onBackToHub != null) 8.dp else 8.dp)
                     )
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(documents, key = { it.id }) { document ->
-                        VaultDocumentCard(
-                            document = document,
-                            textColor = textColor,
-                            backgroundColor = cardColor,
-                            showSecondaryMetadata = !isFlareDay,
-                            onOpen = {
-                                val result = openVaultDocument(context, document.fileUri)
-                                vaultDocumentOpenMessage(result)?.let { message ->
-                                    pendingMessage = message
-                                }
-                            },
-                            onDelete = { documentPendingDeletion = document }
+
+                if (documents.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "No documents saved yet.",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = textColor
                         )
+                        Text(
+                            text = "Tap the + button to add a medical, insurance, or work document.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = textColor
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(documents, key = { it.id }) { document ->
+                            VaultDocumentCard(
+                                document = document,
+                                textColor = textColor,
+                                backgroundColor = cardColor,
+                                showSecondaryMetadata = !isFlareDay,
+                                onOpen = {
+                                    val result = openVaultDocument(context, document.fileUri)
+                                    vaultDocumentOpenMessage(result)?.let { message ->
+                                        pendingMessage = message
+                                    }
+                                },
+                                onDelete = { documentPendingDeletion = document }
+                            )
+                        }
                     }
                 }
             }

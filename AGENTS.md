@@ -19,7 +19,7 @@ This file controls repository implementation conventions. If it conflicts with a
 
 ## Big-picture architecture
 
-- `app/src/main/java/com/example/unseenandstrong/MainActivity.kt` is the main activity and currently coordinates app-level state and navigation across multiple Phase 1–3 screens.
+- `app/src/main/java/com/example/unseenandstrong/MainActivity.kt` is the main activity and coordinates app-level state, the persistent Flare Day Mode toggle, and the 5 primary navigation tabs (Check-In, Comfort, Journal, Routine, Speak Strong), with Speak Strong housing deep advocacy tools (including Interaction Log and Document Vault).
 - Feature UI and related view models are organized in substantial packages under `app/src/main/java/com/example/unseenandstrong/ui/`.
 - Room entities, DAOs, migrations, and the database live under `app/src/main/java/com/example/unseenandstrong/data/local/`.
 - Default-off local advocacy reminders live under `app/src/main/java/com/example/unseenandstrong/reminder/` and use deterministic unique WorkManager names; save, clear, and delete flows must keep their matching work synchronized.

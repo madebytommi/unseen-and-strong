@@ -43,7 +43,7 @@ class DisabilityClaimsUITest {
     @Test
     fun testNavigationToClaimsAndBasicFlow() {
         // First navigate to Speak Strong tab
-        composeTestRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
+        composeTestRule.onNodeWithText("Speak Strong").performClick()
         composeTestRule.waitForIdle()
 
         // From Hub, click STD/LTD Claims
@@ -141,7 +141,7 @@ class DisabilityClaimsUITest {
     }
 
     private fun openClaims() {
-        composeTestRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
+        composeTestRule.onNodeWithText("Speak Strong").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onAllNodes(hasScrollAction())[0].performScrollToNode(hasText("STD/LTD Claims"))
         composeTestRule.onNodeWithText("STD/LTD Claims").performClick()

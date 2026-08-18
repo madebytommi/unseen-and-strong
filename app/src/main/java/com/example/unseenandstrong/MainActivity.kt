@@ -26,9 +26,10 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Tab
@@ -354,6 +355,12 @@ class MainActivity : ComponentActivity() {
                                     onOpenAdvocacyPlans = {
                                         currentScreen = HomeScreen.AdvocacyPlans
                                     },
+                                    onOpenInteractionLog = {
+                                        currentScreen = HomeScreen.Log
+                                    },
+                                    onOpenDocumentVault = {
+                                        currentScreen = HomeScreen.Vault
+                                    },
                                     onOpenScript = { script ->
                                         selectedScriptId = script.id
                                         currentScreen = HomeScreen.Rehearsal
@@ -503,6 +510,9 @@ class MainActivity : ComponentActivity() {
                                 HomeScreen.Log -> InteractionScreen(
                                     viewModel = interactionViewModel,
                                     isFlareDay = isFlareDay,
+                                    onBackToHub = {
+                                        currentScreen = HomeScreen.SpeakStrong
+                                    },
                                     onValidationCompleteNavigateBack = {
                                         currentScreen = HomeScreen.SpeakStrong
                                     }
@@ -511,6 +521,9 @@ class MainActivity : ComponentActivity() {
                                     viewModel = vaultViewModel,
                                     isFlareDay = isFlareDay,
                                     documentUriToOpen = pendingVaultDocumentUri,
+                                    onBackToHub = {
+                                        currentScreen = HomeScreen.SpeakStrong
+                                    },
                                     onDocumentOpenHandled = { pendingVaultDocumentUri = null }
                                 )
                                 HomeScreen.StdLtdClaimsList -> com.example.unseenandstrong.ui.claims.StdLtdClaimsListScreen(
@@ -755,9 +768,7 @@ private fun BottomNavigationBar(
         HomeScreen.ComfortBox,
         HomeScreen.Journal,
         HomeScreen.Routine,
-        HomeScreen.SpeakStrong,
-        HomeScreen.Log,
-        HomeScreen.Vault
+        HomeScreen.SpeakStrong
     )
     val selectedScreen = when (currentScreen) {
         HomeScreen.Rehearsal,
@@ -769,6 +780,8 @@ private fun BottomNavigationBar(
         HomeScreen.BoundaryBuilder,
         HomeScreen.RequestLog,
         HomeScreen.BenefitsTracker,
+        HomeScreen.Log,
+        HomeScreen.Vault,
         HomeScreen.StdLtdClaimsList,
         HomeScreen.ClaimDetail,
         HomeScreen.ClaimForm -> HomeScreen.SpeakStrong
@@ -776,13 +789,12 @@ private fun BottomNavigationBar(
     }
     val selectedIndex = topLevelScreens.indexOf(selectedScreen).coerceAtLeast(0)
 
-    ScrollableTabRow(
+    TabRow(
         selectedTabIndex = selectedIndex,
         containerColor = if (isFlareDay) NightLavender else SoftCloudGrey,
         contentColor = DeepFogGrey,
         divider = {},
-        indicator = {},
-        edgePadding = 0.dp
+        indicator = {}
     ) {
         topLevelScreens.forEach { screen ->
             Tab(
@@ -822,10 +834,23 @@ private fun FlareDayModeToggle(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            "Flare Day Mode",
-            color = if (isFlareDayActive) PaleCloudWhite else DeepFogGrey
-        )
+        Column(
+            modifier = Modifier.weight(1f, fill = false),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = if (isFlareDayActive) "Flare Day is on" else "Flare Day Mode",
+                style = MaterialTheme.typography.titleMedium,
+                color = if (isFlareDayActive) PaleCloudWhite else DeepFogGrey
+            )
+            if (isFlareDayActive) {
+                Text(
+                    text = "Things are a little simpler today.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = PaleCloudWhite.copy(alpha = 0.85f)
+                )
+            }
+        }
         Switch(
             checked = isFlareDayActive,
             onCheckedChange = { onToggle() },

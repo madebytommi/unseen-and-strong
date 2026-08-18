@@ -12,7 +12,7 @@ Unseen and Strong is intentionally low-pressure: no streak shame, no punitive re
 
 ## Current status
 
-Phase 1 and Phase 2 form the v1.0 release-candidate surface. Phase 2 text-based advocacy, local follow-up reminders, design/accessibility review, and closeout checks are complete for v1; audio rehearsal is deferred. Early Phase 3 medication, cycle, and insights foundations remain internal and are not part of normal v1 top-level navigation. This is an RC assessment, not a public release or signed distribution claim.
+Phase 1 and Phase 2 form the v1.0 release-candidate surface. Primary navigation consists of 5 core tabs (Check-In, Comfort, Journal, Routine, Speak Strong), with deep advocacy tools including the Interaction Log and Document Vault housed within the Speak Strong hub. Flare Day Mode operates as a persistent global app mode at the top of the shell that simplifies views without navigating away. Phase 2 text-based advocacy, local follow-up reminders, design/accessibility review, and closeout checks are complete for v1; audio rehearsal is deferred. Early Phase 3 medication, cycle, and insights foundations remain internal and are not part of normal v1 top-level navigation. This is an RC assessment, not a public release or signed distribution claim.
 
 ## Phase 1 — The Cocoon MVP
 
@@ -26,7 +26,7 @@ Implemented Phase 1 features:
   - Mood note on standard days
   - Simplified check-in flow on Flare Day Mode
 - Flare Day Mode
-  - App-level toggle
+  - App-level toggle with gentle state messaging ("Flare Day is on" / "Things are a little simpler today.")
   - Softer Night Lavender visual mode
   - Simplified versions of major screens
   - Rest-first copy that lowers expectations instead of adding pressure
@@ -58,7 +58,7 @@ Status: complete for the v1.0 release-candidate scope.
 
 Currently implemented and accessible:
 
-- Speak Strong script hub
+- Speak Strong script hub (housing scripts, rehearsal, preparation, reflection, boundary builder, ADA generator, advocacy resources, Request Log, Disability Benefits Tracker, STD/LTD Claims, Interaction Log, and Document Vault)
 - Gentle / Direct / Firm script tone switching
 - Category filtering for All, Doctor, Work, Insurance, Family, Strangers, and Boundary
 - Seeded scripts for Doctor, Work, Boundary, Insurance, Family, and Stranger scenarios

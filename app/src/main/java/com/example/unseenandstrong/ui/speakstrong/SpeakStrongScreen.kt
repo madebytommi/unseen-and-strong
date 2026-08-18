@@ -58,6 +58,8 @@ fun SpeakStrongScreen(
     onOpenBenefitsTracker: () -> Unit = {},
     onOpenStdLtdClaims: () -> Unit = {},
     onOpenAdvocacyPlans: () -> Unit = {},
+    onOpenInteractionLog: () -> Unit = {},
+    onOpenDocumentVault: () -> Unit = {},
     onOpenScript: (ScriptEntity) -> Unit = {}
 ) {
     val backgroundColor = if (isFlareDay) NightLavender else SoftCloudGrey
@@ -161,6 +163,8 @@ fun SpeakStrongScreen(
                 item { AdvocacyHubButton("Disability Benefits Tracker", onOpenBenefitsTracker, true) }
                 item { AdvocacyHubButton("STD/LTD Claims", onOpenStdLtdClaims, true) }
                 item { AdvocacyHubButton("Saved Advocacy Plans", onOpenAdvocacyPlans, false) }
+                item { AdvocacyHubButton("Interaction Log", onOpenInteractionLog, false) }
+                item { AdvocacyHubButton("Document Vault", onOpenDocumentVault, false) }
                 if (isFlareDay) {
                     item {
                         TextButton(

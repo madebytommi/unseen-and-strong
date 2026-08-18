@@ -3,6 +3,7 @@ package com.example.unseenandstrong
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
@@ -40,7 +41,7 @@ class SpeakStrongNavigationTest {
 
     @Test
     fun allSpeakStrongChildDestinationsKeepSpeakStrongSelected() {
-        composeRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
+        composeRule.onNodeWithText("Speak Strong").performClick()
         composeRule.waitForIdle()
         assertSpeakStrongSelected()
 
@@ -50,17 +51,22 @@ class SpeakStrongNavigationTest {
             "Boundary Builder",
             "Request Log",
             "Disability Benefits Tracker",
-            "Saved Advocacy Plans"
+            "STD/LTD Claims",
+            "Saved Advocacy Plans",
+            "Interaction Log",
+            "Document Vault"
         ).forEach { destination ->
             openHubDestination(destination)
             assertSpeakStrongSelected()
-            composeRule.onNodeWithText("Back to Speak Strong").performClick()
+            composeRule.onNode(
+                hasText("Back to Speak Strong") or hasContentDescription("Back to Speak Strong")
+            ).performClick()
             composeRule.waitForIdle()
         }
 
         scrollHubTo("Practice this script")
         composeRule.onAllNodesWithText("Practice this script")[0].performClick()
-        waitForText("Back to Speak Strong")
+        waitForBackToHub()
         assertSpeakStrongSelected()
 
         scrollCurrentScreenTo(
@@ -87,19 +93,23 @@ class SpeakStrongNavigationTest {
     @Test
     fun flareDayHubReducesVisibleToolsWithoutRemovingAccess() {
         composeRule.onNode(isToggleable() and hasStateDescription("Off")).performClick()
-        composeRule.onNodeWithText("Speak Strong").performScrollTo().performClick()
+        composeRule.onNodeWithText("Speak Strong").performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("Saved Advocacy Plans").assertExists()
         composeRule.onNodeWithText("Show all advocacy tools").assertExists()
         composeRule.onNodeWithText("Draft ADA Request").assertDoesNotExist()
-        composeRule.onNode(isToggleable() and hasStateDescription("Off")).assertExists()
+        composeRule.onNodeWithText("Interaction Log").assertDoesNotExist()
+        composeRule.onNodeWithText("Document Vault").assertDoesNotExist()
+        composeRule.onNode(isToggleable() and hasStateDescription("On")).assertExists()
 
         composeRule.onNodeWithText("Show all advocacy tools").performClick()
         composeRule.onNodeWithText("Draft ADA Request").assertExists()
         composeRule.onNodeWithText("Advocacy Resources").assertExists()
         composeRule.onNodeWithText("Request Log").assertExists()
         composeRule.onNodeWithText("STD/LTD Claims").assertExists()
+        composeRule.onNodeWithText("Interaction Log").assertExists()
+        composeRule.onNodeWithText("Document Vault").assertExists()
 
         composeRule.onNode(isToggleable() and hasStateDescription("On")).performClick()
         composeRule.waitForIdle()
@@ -123,6 +133,14 @@ class SpeakStrongNavigationTest {
         composeRule.onNode(
             androidx.compose.ui.test.isSelected() and androidx.compose.ui.test.hasText("Speak Strong")
         ).assertExists()
+    }
+
+    private fun waitForBackToHub() {
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodes(
+                hasText("Back to Speak Strong") or hasContentDescription("Back to Speak Strong")
+            ).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     private fun waitForText(text: String) {

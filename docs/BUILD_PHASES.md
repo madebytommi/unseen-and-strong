@@ -25,7 +25,7 @@ The roadmap is intentionally phased to protect the project from feature bloat. A
 
 ## v1.0 Release-Candidate Boundary
 
-The v1.0 release-candidate surface is Phase 1 plus Phase 2. Phase 3 medication, cycle, and insights code/data remain internal and deferred from normal top-level navigation. This closeout describes RC readiness only; it does not claim a public release, signed distribution, or physical-device validation.
+The v1.0 release-candidate surface is Phase 1 plus Phase 2, presented through a simplified 5-tab primary navigation structure: **Check-In**, **Comfort**, **Journal**, **Routine**, and **Speak Strong**. Deep advocacy workflows—including the Interaction Log and Document Vault—are accessed through Speak Strong. Phase 3 medication, cycle, and insights code/data remain internal and deferred from normal top-level navigation. This closeout describes RC readiness only; it does not claim a public release, signed distribution, or physical-device validation.
 
 ## Phase 1 — The Cocoon MVP
 
@@ -50,7 +50,9 @@ The app is offline-first and keeps its core user data on-device.
 
 #### Flare Day Mode
 
-- ✅ App-level Flare Day toggle
+- ✅ App-level persistent global toggle in the app shell
+- ✅ Clear state messaging ("Flare Day is on" / "Things are a little simpler today." when active; "Flare Day Mode" when inactive)
+- ✅ In-place view simplification without navigating away
 - ✅ Night Lavender reduced-stimulation theme
 - ✅ Simplified versions of major screens
 - ✅ Reduced cognitive load
@@ -185,8 +187,12 @@ Audio rehearsal is not a v1 release requirement.
 
 # Advocacy Tracker
 
+Housed within the **Speak Strong** hub, keeping top-level navigation focused on 5 primary tabs while providing dedicated back-to-hub navigation:
+
 ## Interaction Log
 
+- ✅ Accessible within Speak Strong hub
+- ✅ Header back navigation to return to Speak Strong
 - ✅ Date / interaction history
 - ✅ Person
 - ✅ Organization
@@ -239,6 +245,8 @@ This is considered a valid Phase 2 expansion because it supports the original ad
 
 ## Document Vault
 
+- ✅ Accessible within Speak Strong hub
+- ✅ Header back navigation to return to Speak Strong
 - ✅ Local image-based document storage
 - ✅ Medical document support
 - ✅ Insurance document support
