@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Unseen &amp; Strong</string>
+    <string name="checkin_signature">I love you, Goldfish</string>
     <string name="follow_up_notification_channel_name">Follow-up reminders</string>
     <string name="follow_up_notification_channel_description">Gentle local reminders for advocacy follow-ups and deadlines</string>
     <string name="follow_up_notification_advocacy">A gentle follow-up reminder for something you wanted to revisit today.</string>
