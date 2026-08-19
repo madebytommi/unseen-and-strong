@@ -4,6 +4,18 @@ An Android app built with Jetpack Compose to support people living with chronic,
 
 Unseen and Strong is intentionally low-pressure: no streak shame, no punitive reminders, and no productivity-first health tracking. The app is designed to help users notice patterns, preserve energy, self-advocate, and find comfort when symptoms are hard to explain or invisible to others.
 
+## Why I made this
+
+This project started as a couple of things at once.
+
+First, I wanted to see what would happen if I tried to build a real Android app in a language and ecosystem I don't know especially well and let AI take the reins on a lot of the implementation. I wasn't trying to prove that I suddenly knew Kotlin inside and out. I was curious about how far I could get by setting the direction, making the product decisions, testing what came back, catching problems, and letting AI do a lot of the heavy lifting in between.
+
+At the same time, someone close to me lives with chronic pain and other health issues that can make ordinary days a lot harder than they look from the outside. I wanted to make something they might actually find useful — not a startup, not something I was trying to sell, and definitely not an attempt to build the world's next great health app. Just something thoughtful, practical, and a little kinder on the days when everything already feels like work.
+
+That ended up shaping the app more than I expected. A lot of health and productivity tools are built around doing more, building streaks, staying on schedule, and being reminded when you fall behind. I wanted this one to be comfortable saying the opposite sometimes: rest is allowed, a tiny win still counts, and having a bad day doesn't mean you failed anything.
+
+So this repo is partly an AI-assisted development experiment and partly a small personal project made with someone real in mind. It's not meant to diagnose or treat anything, and I'm not pretending it is more serious or polished than it is. I mostly wanted to see if I could make something useful, learn from the process, and maybe leave behind something that makes a difficult day slightly easier.
+
 ## Project documentation
 
 - [Product Vision](docs/PRODUCT_VISION.md) — why Unseen & Strong exists and the principles that guide product decisions.
